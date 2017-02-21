@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <dwsync>
-<file name="update_queue.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321590124403720" remote="131321625600000000" Dst="1" />
-<file name="feed-factory.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321452935274579" remote="131321488800000000" Dst="1" />
-<file name="crest.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321587327727379" remote="131321623200000000" Dst="1" />
-<file name="connect.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794311062817" remote="131321487600000000" Dst="1" />
-<file name="feed.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321546266420193" remote="131321581800000000" Dst="1" />
-<file name="property-factory.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321559849572112" remote="131321595600000000" Dst="1" />
-<file name="property.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794312338915" remote="131321596200000000" Dst="1" />
+<file name="update_queue.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321902359298414" remote="131321938200000000" Dst="1" />
+<file name="feed-factory.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321688326597260" remote="131321883000000000" Dst="1" />
+<file name="crest.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321827417099437" remote="131321883000000000" Dst="1" />
+<file name="connect.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321688326472174" remote="131321883000000000" Dst="1" />
+<file name="feed.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321809996681955" remote="131321883000000000" Dst="1" />
+<file name="property-factory.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321688326612269" remote="131321883000000000" Dst="1" />
+<file name="property.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321926017596698" remote="131321961600000000" Dst="1" />
+<file name="property-manager.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321926244791631" remote="131321962200000000" Dst="1" />
+<file name="endpoint.class.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321688326827413" remote="131321883000000000" Dst="1" />
 </dwsync>

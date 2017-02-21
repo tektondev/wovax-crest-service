@@ -46,6 +46,8 @@ class Feed {
 	
 	public function authenticate(){
 		
+		$date = new DateTime();
+		
 		if ( $this->get_token() && ( strtotime( $this->get_token_expires() ) > strtotime( 'now' ) ) ) {
 			
 			return true;
@@ -86,9 +88,11 @@ class Feed {
 				$this->set_token_expires( $expires[1][0] );
 				$this->update_token();
 				
+				return true;
+				
 			} else {
 				
-				return false;
+				//return false;
 				
 			}// end if
 			
@@ -138,7 +142,7 @@ class Feed {
 	} // end set_feed_by_id 
 	
 	
-	protected function update_token( $response ) {
+	protected function update_token() {
 		
 		$feed_id = $this->get_feed_id();
 		

@@ -25,7 +25,7 @@ class Crest {
 	} // end get_crest_updates
 	
 	
-	protected function get_properties_delta( $feed, $args, $type = 'residential-sale' ){
+	protected function get_properties_delta( $feed, $args, $type ){
 		
 		ini_set( 'max_execution_time', 3600 );
 		
@@ -138,12 +138,15 @@ class Crest {
 		
 		$cookie = explode( '=' , $feed->get_token() );
 		
+		//$soap_client = new DummySoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
 		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
 		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
 		
 		$params = new stdClass();
 		$params->ListingIDs = new stdClass();
 		$params->ListingIDs->guid = $property_ids;
+		
+		try {
 		
 		switch( $type ){
 			
@@ -167,12 +170,18 @@ class Crest {
 				break;
 			case 'commercial-lease':
 				$response = $soap_client->CommercialLeaseListingDetailGet( $params );
-				if ( isset( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) && is_array( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ) {
-					$properties = $response->CommercialSaleListingDetails->CommercialSaleListingDetail;
+				if ( isset( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) && is_array( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ) {
+					$properties = $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail;
 				} // end if
 				break;
 				
 		} // end switch
+		
+		} catch( Exception $e ){
+		}
+		
+		//var_dump( $response );
+		
 		
 		return $properties;
 		
@@ -473,3 +482,14 @@ class Crest {
 	
 	
 } // end Crest
+
+
+class DummySoapClient extends SoapClient {
+    function __construct($wsdl, $options) {
+        parent::__construct($wsdl, $options);
+    }
+    function __doRequest($request, $location, $action, $version, $one_way = 0) {
+        var_dump( $request );
+		return parent::__doRequest($request, $location, $action, $version, $one_way);
+    }
+}

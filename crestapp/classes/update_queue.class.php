@@ -19,13 +19,13 @@ class Update_Queue {
 	} // end __construct
 	
 	
-	public function get_update_properties_by_type( $types = array(), $count = 60 ){
+	public function get_update_properties_by_type( $types = array(), $count = 10 ){
 		
 		$properties_type = array();
 		
 		if ( empty( $types ) ) $types = $this->types;
 		
-		$properties = $this->get_update_properties( $count );
+		$properties = $this->get_update_properties( $count, $types );
 		
 		foreach( $properties as $property_id => $type ){
 			
@@ -44,7 +44,23 @@ class Update_Queue {
 		
 		$property_ids = array();
 		
-		$sql = "SELECT * FROM update_queue WHERE status='AC' LIMIT $count";
+		if ( $types ) {
+			
+			$values = array();
+			
+			foreach( $types as $type ){
+				
+				$values[] = "'" . $type . "'";
+				
+			} // end foreach
+		
+			$sql = "SELECT * FROM update_queue WHERE type IN (" . implode( ',', $values ) . ") LIMIT 0, $count";
+		
+		} else {
+			
+			$sql = "SELECT * FROM update_queue LIMIT 0, $count";
+			
+		} // end if
 		
 		$results = $this->connection->query( $sql );
 		
@@ -67,6 +83,8 @@ class Update_Queue {
 		
 		$properties = array();
 		
+		$types = ( ! empty( $args['types'] ) )? $args['types'] : array(); 
+		
 		$now = new DateTime();
 		
 		$default_args = array(
@@ -79,7 +97,7 @@ class Update_Queue {
 		
 		if ( $this->feed->authenticate() ){
 			
-			$properties = $this->crest->get_property_updates( $this->feed, $args );
+			$properties = $this->crest->get_property_updates( $this->feed, $args, $types );
 			
 			if ( $args['save'] ){
 				

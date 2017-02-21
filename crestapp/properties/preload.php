@@ -85,8 +85,10 @@ var crest = {
 					var json = JSON.parse( response );
 					
 					if ( json ){
+						
+						
 					
-						var tb_row = '<tr><td>&rarr; ' + args.render_date + ' (' + args.day_part + ' of ' + inc + ' )</td><td>' + response.data + ' Results Found</td></tr>';
+						var tb_row = '<tr><td>&rarr; ' + args.render_date + ' (' + args.day_part + ' of ' + inc + ' )</td><td>' + json.data + ' Results Found</td></tr>';
 						
 					} // end if
 					
@@ -135,6 +137,8 @@ var crest = {
 			
 			var inc = jQuery('#feed-i').val();
 			
+			var ptype = jQuery('#types').val();
+			
 			var set_i = ( 1440 / inc );
 			
 			var day = date.getDate();
@@ -151,13 +155,13 @@ var crest = {
 			
 			console.log( c_date );
 			
-			var url_params = [ crest.feed.feed ];
+			var url_params = [];
 			
 			var smins = ( ( dpart - 1 ) * set_i );
 			
 			var mins = ( dpart * set_i );
 			
-			var args = { days: pday, end_time: date, render_date: c_date, minutes:mins, minutes_start: smins, day_index: pday, day_part: dpart };
+			var args = { days: pday, end_time: c_date, render_date: c_date, minutes:mins, minutes_start: smins, day_index: pday, day_part: dpart, type: ptype };
 			
 			console.log( args );
 			
@@ -352,23 +356,20 @@ var crest = {
         	<label>Feed ID</label>
         	<input type="text" name="feed_id" id="feed-id" placeholder="ID" value="1" /> 
         </div><div class="field">
-        	<label># of Increments</label>
-        	<select name="i" id="feed-i">
-            	<option value="1">1</option>
-                <option value="2">2</option>
-                <option value="4">4</option>
-                <option value="8">8</option>
-                <option value="12">12</option>
-                <option value="24">24</option>
-                <option value="48">48</option>
-                <option value="60">60</option>
-                <option value="360">360</option>
-                <option value="480">480</option>
-            </select> 
+        	<label>Property Types</label>
+        	<select name="type" id="types">
+            	<option value="">All</option>
+            	<option value="residential-sale">Residential Sale</option>
+                <option value="commercial-lease">Commercial Lease</option>
+                <option value="commercial-sale">Commercial Sale</option>
+                <option value="residential-rent">Residential Rent</option>
+            </select>
+
         </div><div class="field">
         	<label>&nbsp;</label>
        		<input type="submit" value="go" />
         </div>
+        <input type="hidden" name="i" id="feed-i" value="1" />
         </form>
         <div id="msg"></div>
         <table id="feed-results">

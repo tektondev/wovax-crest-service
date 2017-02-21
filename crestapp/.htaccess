@@ -1,5 +1,0 @@
-RewriteEngine on
-
-RewriteRule ^([^\/]+)\/([^\/]+)$ /index.php?service-category=$1&service=$2 [NC]
-RewriteRule ^([^\/]+)\/([^\/]+)\/([^\/|^\?]+)$ /index.php?service-category=$1&service=$2&item=$3 [NC]
-#RewriteRule ^([^\/]+)\/([^\/]+)\/([^\/|^\?]+)\/([^\/|^\?]+)$ /index.php?service-category=$1&service=$2&identifier=$3&param=$4 [NC]

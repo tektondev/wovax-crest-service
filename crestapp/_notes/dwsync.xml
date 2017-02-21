@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <dwsync>
 <file name="index.php" server="ftp.contributelist.com//" local="131315674095331054" remote="131315709600000000" Dst="1" />
-<file name=".htaccess" server="ftp.contributelist.com//" local="131314987864838359" remote="131315707800000000" Dst="1" />
 <file name="cron.php" server="ftp.contributelist.com//" local="131315536455842000" remote="131315707800000000" Dst="1" />
 <file name="config.php" server="ftp.contributelist.com//" local="131315500416286018" remote="131315707800000000" Dst="1" />
 <file name="setup.php" server="ftp.contributelist.com//" local="131315453782134270" remote="131315707800000000" Dst="1" />
 <file name="style.css" server="ftp.contributelist.com//" local="131315675887129865" remote="131315711400000000" Dst="1" />
 <file name="error_log" server="ftp.contributelist.com//" local="131314942740552586" remote="131315707800000000" Dst="1" />
-<file name="style.css" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309901940" remote="131321883000000000" Dst="1" />
-<file name="setup.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309773051" remote="131321883000000000" Dst="1" />
-<file name="cron.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321929271075013" remote="131321965200000000" Dst="1" />
-<file name="index.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309667982" remote="131321883000000000" Dst="1" />
-<file name="config.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321933649742667" remote="131321969400000000" Dst="1" />
-<file name=".htaccess" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794302744113" remote="131316835200000000" Dst="1" />
+<file name="style.css" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309901940" remote="131321970000000000" Dst="1" />
+<file name="setup.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309773051" remote="131321970000000000" Dst="1" />
+<file name="cron.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321932054661374" remote="131321970000000000" Dst="1" />
+<file name="index.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131316794309667982" remote="131321970000000000" Dst="1" />
+<file name="config.php" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321934848814828" remote="131321970600000000" Dst="1" />
 <file name="error_log" server="ftp.contributelist.com//public_html/crest.tektondev.com/crestapp/" local="131321418278293538" remote="131320846800000000" Dst="1" />
 </dwsync>

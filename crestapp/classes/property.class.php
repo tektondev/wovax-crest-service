@@ -4,6 +4,25 @@ class Property {
 	
 	public $fields;
 	protected $connection = false;
+	protected $exclude_db = array(
+		'AssociatedAgents',
+		'ListingRemarks',
+		'SourceSystemID',
+		'GeographicRegions',
+		'ListingFeature',
+		'PropertyLocation',
+		'BuildingArea',
+		'LotSize',
+		'PropertyFeatures',
+		'Floors',
+		'Rooms',
+		'Schools',
+		'ListingMedia',
+	);
+	protected $delete_status = array(
+		'Withdrawn',
+		'Expired'
+	);
 	
 	
 	public function __construct( $connection = false ){
@@ -182,8 +201,12 @@ class Property {
 			'AnchorStores' => ( isset( $p->Property->CommercialProperty->AnchorStores) )? $p->Property->CommercialProperty->AnchorStores : '',
 			'SuiteApartmentName' => ( isset( $p->Property->CommercialProperty->SuiteApartmentName ) )? $p->Property->CommercialProperty->SuiteApartmentName : '',
 			'SubUnits' => ( isset( $p->Property->CommercialProperty->SubUnits ) )? $p->Property->CommercialProperty->SubUnits : '',
+			'SchoolElementary' => '',
+			'SchoolMiddle' => '',
+			'SchoolHigh' => '',
 			
 			'PropertySubType' => ( isset( $p->Property->PropertySubType->Name ) )? $p->Property->PropertySubType->Name : '',
+			'PropertyListingFeatures' => '',
 			
 			'PropertyType' => ( isset( $p->Property->PropertyType->Type ) )? $p->Property->PropertyType->Type : '',
 			'Latitude' => ( isset( $p->Property->GeographicData->Latitude ) )? $p->Property->GeographicData->Latitude : '',
@@ -198,6 +221,44 @@ class Property {
 			'AlternateListPrice' => ( isset( $p->AlternateListPrice->Amount ) )? $p->AlternateListPrice->Amount : '',
 			'AlternateListPriceCurrency' => ( isset( $p->AlternateListPrice->Currency ) )? $p->AlternateListPrice->Currency : '',
 		);
+		
+		$schools = $this->get_field_value('Schools');
+		
+		if ( ! empty( $schools->School ) && is_array( $schools->School ) ){
+				
+			foreach( $schools->School as $school ){
+				
+				if ( isset( $school->SchoolType ) ){
+					
+					switch( $school->SchoolType ){
+						case 'Elementary School':
+							$this->fields['SchoolElementary'] = $school->SchoolName;
+							break;
+						case 'Middle School':
+							$this->fields['SchoolMiddle'] = $school->SchoolName;
+							break;
+						case 'High School':
+							$this->fields['SchoolHigh'] = $school->SchoolName;
+							break;
+					} // end swithc
+					
+				} // end if
+				
+			} // end foreach
+		
+		} // end if	
+		
+		$feature_array = $this->get_property_features_array();
+		
+		$p_features = array();
+		
+		foreach( $feature_array as $feature_set ){
+			
+			$p_features[] = $feature_set['feature_name'];
+			
+		} // end foreach
+		
+		$this->fields['PropertyListingFeatures'] = implode( ',' , $p_features );
 		
 	} // end set_from_crest
 	
@@ -227,7 +288,7 @@ class Property {
 		
 		$keys = array();
 		
-		$exclude = array('ListingMedia');
+		$exclude = $this->exclude_db;
 		
 		foreach( $fields as $key => $value ){
 			
@@ -252,6 +313,49 @@ class Property {
 		return $sql;
 		
 	} // end get_sql_insert_query
+	
+	
+	public function to_db(){
+		
+		$status = $this->get_field_value('Status');
+		
+		if ( in_array( $status , $this->delete_status ) ){
+			
+			$this->remove_property();
+			
+		} else {
+			
+			$this->insert();
+			
+		} // end if
+		
+		
+	} // end to_db
+	
+	
+	public function remove_property(){
+		
+		$property_id = $this->get_field_value('Property_ID');
+		
+		$tables = array(
+			'crest_properties',
+			'crest_property_agents',
+			'crest_property_features',
+			'crest_property_georegions',
+			'crest_property_images',
+			'crest_property_remarks',
+			'crest_property_schools',
+		);
+		
+		foreach( $tables as $table ){
+			
+			$sql = "DELETE FROM $table WHERE Property_ID='$property_id'";
+			
+			$this->connection->query( $sql );
+			
+		} // end foreach
+		
+	} // end delete_property_by_id
 	
 	
 	public function insert(){
@@ -415,6 +519,55 @@ class Property {
 		} // end if	
 		
 	} // end insert_update_properties
+	
+	
+	public function get_property_features_array(){
+		
+		$p_array = array();
+		
+		$features = $this->get_field_value('PropertyFeatures');
+		
+		if ( $features && is_array( $features ) ){
+			
+			foreach( $features as $feature ){
+				
+				if ( is_array( $feature ) ){
+					
+					foreach( $feature as $sub_feature ){
+						
+						$group_name = ( isset( $sub_feature->FeatureGroupName ) )? $sub_feature->FeatureGroupName : '';
+						$feature_name = ( isset( $sub_feature->FeatureName ) )? $sub_feature->FeatureName : '';
+						$feature_code = ( isset( $sub_feature->FeatureCode ) )? $sub_feature->FeatureCode : '';
+						
+						$p_array[] = array(
+							'group_name' => $group_name,
+							'feature_name' => $feature_name,
+							'feature_code' => $feature_code,
+						); 
+						
+					} // end foreach
+					
+				} else {
+					
+					$group_name = ( isset( $feature->FeatureGroupName ) )? $feature->FeatureGroupName : '';
+					$feature_name = ( isset( $feature->FeatureName ) )? $feature->FeatureName : '';
+					$feature_code = ( isset( $feature->FeatureCode ) )? $feature->FeatureCode : ''; 
+					
+					$p_array[] = array(
+						'group_name' => $group_name,
+						'feature_name' => $feature_name,
+						'feature_code' => $feature_code,
+					); 
+					
+				}
+				
+			} // end foreach
+			
+		} // end if	
+		
+		return $p_array;
+		
+	}
 	
 	
 	public function insert_property_feature( $listing_id, $mls_id, $group_name, $name, $code ){
@@ -609,13 +762,39 @@ class Property {
 	
 	protected function insert_property(){
 		
-		if ( ! $this->check_existing( 'crest_properties', 'Property_ID', $this->get_field_value('Property_ID') ) ){
+		$property_id = $this->get_field_value('Property_ID');
+		
+		$is_existing = $this->check_existing( 'crest_properties', 'Property_ID', $property_id );
+		
+		if ( ! $is_existing ){
 		
 			$sql = $this->get_sql_insert_query();
 		
 			$this->connection->query( $sql );
 		
-		} // end if
+		} else {
+			
+			if ( $this->get_field_value('LastUpdatedDate') && ( strtotime( $this->get_field_value('LastUpdatedDate') ) > strtotime( $is_existing['LastUpdatedDate'] ) ) ) {
+			
+				$fields = $this->get_fields();
+				
+				$qvalues = array();
+				
+				foreach( $fields as $label => $value ){
+					
+					if ( 'Property_ID' == $label || in_array( $label, $this->exclude_db ) ) continue;
+					
+					$qvalues[] = $label . "='" .  $value . "'";
+					
+				} // end foreach
+				
+				$sql = "UPDATE crest_properties SET " . implode( ',', $qvalue ) . " WHERE Property_ID='$property_id'";
+				
+				$this->connection->query( $sql );
+				
+			} // end if
+			
+		}// end if
 		
 	} // end insert_property
 	
@@ -635,7 +814,9 @@ class Property {
 		
 		if ( $result->num_rows > 0 ) {
 			
-			return true;
+			$row = $result->fetch_assoc();
+			
+			return $row;
 			
 		} // end if
 		

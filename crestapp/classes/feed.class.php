@@ -15,8 +15,8 @@ class Feed {
 	
 	public function get_table(){ return $this->table; }
 	public function get_feed_id(){ return $this->feed_id; }
-	protected function get_feed_user(){ return $this->user; }
-	protected function get_feed_pwd(){ return $this->pwd; }
+	public function get_feed_user(){ return $this->user; }
+	public function get_feed_pwd(){ return $this->pwd; }
 	public function get_brand_code(){ return $this->brand_code; }
 	public function get_updated() { return $this->updated; }
 	public function get_token(){ return $this->token; }
@@ -32,58 +32,77 @@ class Feed {
 	public function set_token_expires( $value ) { $this->token_expires = $value; }
 	
 	
-	public function __construct( $connection = false ){
+	public function __construct( $connection = false, $feed_id = false ){
 		
 		$this->connection = $connection;
 		
-	} // end __construct
-	
-	
-	public function authenticate(){
+		if ( $feed_id ){
 		
-		require_once 'crest.class.php';
-		$crest = new Crest();
-		
-		$response = $crest->authenticate( $this->token, $this->token_expires, $this->user, $this->pwd );
-		
-		if ( is_array( $response ) ){
-			
-			$this->update_token( $response );
-			
-			return true;
-			
-		} else if ( $response ){
-			
-			return true;
-			
-		} else {
-			
-			return false;
+			$this->set_feed_by_id( $feed_id );
 			
 		} // end if
 		
-		if ( $response && 'update' == $response ){
-			
-			$this->update_token();
-			
-			return true;
-			
-		} else if ( $response ){
+	} // end __construct
+	
+	public function authenticate(){
+		
+		$date = new DateTime();
+		
+		if ( $this->get_token() && ( strtotime( $this->get_token_expires() ) > strtotime( 'now' ) ) ) {
 			
 			return true;
 			
 		} else {
 			
-			return false;
+			$xml = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Header/><soapenv:Body/></soapenv:Envelope>';
+
+			$headers = array(
+				'Content-Type: text/xml',
+				'Accept-Encoding: gzip,deflate',
+				'SOAPAction: "http://rfg.realogy.com/Btt/AuthenticationManagement/Services/2009/05/AuthenticationManagementServiceContract/Authenticate"',
+				'Host: auth.ws.realogyfg.com',
+				'Connection: Keep-Alive',
+				'Cookie: OBBasicAuth=fromDialog; ObSSOCookie=loggedoutcontinue',
+				//'Cookie2: $Version=1',
+				'Authorization: Basic ' . base64_encode( $this->get_feed_user() . ':' . $this->get_feed_pwd() ),
+			);
+			
+			$process = curl_init( 'https://auth.ws.realogyfg.com/AuthenticationService/AuthenticationMgmt.svc' );
+			
+			curl_setopt($process, CURLOPT_HTTPHEADER, $headers );
+			curl_setopt($process, CURLOPT_TIMEOUT, 30);
+			curl_setopt($process, CURLOPT_POST, 1);
+			curl_setopt($process, CURLOPT_POSTFIELDS, $xml);
+			curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($process, CURLOPT_ENCODING, '');
+			
+			$response = curl_exec($process);
+			
+			preg_match( '/<a:Token>(.*)<\/a:Token>/', $response, $matches, PREG_OFFSET_CAPTURE );
+			
+			preg_match( '/<a:Expiration>(.*)<\/a:Expiration>/', $response, $expires, PREG_OFFSET_CAPTURE );
+			
+			if ( ! empty( $matches[1][0] ) && ! empty( $expires[1][0] )){
+				
+				$this->set_token( $matches[1][0] );
+				$this->set_token_expires( $expires[1][0] );
+				$this->update_token();
+				
+				return true;
+				
+			} else {
+				
+				//return false;
+				
+			}// end if
 			
 		} // end if
 		
 	} // end authenticate
 	
-	
-	public function get_feed_by_id( $feed_id ){
+	public function set_feed_by_id( $feed_id ){
 		
-		$sql = "SELECT * FROM $this->table WHERE id='$feed_id' LIMIT 1";
+		$sql = "SELECT * FROM crest_feeds WHERE id='$feed_id' LIMIT 1";
 		
 		$results = $this->connection->query( $sql );
 		
@@ -93,9 +112,13 @@ class Feed {
 			
 			$this->set_feed_by_db_row( $row );
 			
+		} else {
+		
+			return $false;
+		
 		} // end if
 		
-	} // end set_feed_by_id 
+	} // end set_feed_by_id
 	
 	
 	public function set_feed_by_db_row( $feed ){
@@ -119,11 +142,9 @@ class Feed {
 	} // end set_feed_by_id 
 	
 	
-	protected function update_token( $response ) {
+	protected function update_token() {
 		
 		$feed_id = $this->get_feed_id();
-		$this->token = $response['token'];
-		$this->token_expires = $response['token_expires'];
 		
 		$sql = "UPDATE $this->table SET token='$this->token',token_expires='$this->token_expires' WHERE id='$feed_id'";
 		

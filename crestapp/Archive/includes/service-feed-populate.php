@@ -1,4 +1,5 @@
-<!doctype html>
+<?php require_once dirname( dirname( __FILE__ ) ) . '/config.php';
+?><!doctype html>
 <html>
 <head>
 <meta charset="utf-8">

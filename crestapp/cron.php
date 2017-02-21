@@ -1,69 +1,33 @@
 <?php
 
-class Cron {
-	
-	//protected $feed_manager;
-	
-	//protected $crest;
-	
+require_once 'classes/endpoint.class.php';
+
+class Cron extends Endpoint {
 	
 	public function __construct(){
 		
 		require_once 'config.php';
 		
-		$this->do_get_properties_details();
+		$this->do_request();
 		
-		$this->do_get_updates();
-		
-	} // end __construct
+	}
 	
 	
-	public function do_get_properties_details(){
+	public function do_request(){
 		
-		require_once 'updated-classes/service-properties.class.php';
-		$service = new Service_Properties();
+		require_once CRESTAPPCLASSPATH . 'property-manager.class.php';
+		$property_manager = new Property_Manager();
 		
-		$service_args = array(
-			'feed_id' => 1,
-		);
+		$update_property_ids = $property_manager->get_feed_updates();
+
+		$this->response( true, count( $update_property_ids ) . ' Properites Added to Queue', count( $update_property_ids ) );
 		
-		$service->do_get_details_service( $service_args );
+		$detail_property_ids = $property_manager->get_property_details();
 		
-	} // end do_get_properties_details
+		$this->response( true, count( $detail_property_ids ) . ' Properites Parsed from Update Queue', $detail_property_ids ); 
+		
+	} // end do_request
 	
-	
-	public function do_get_updates(){
-		
-		require_once 'updated-classes/connect.class.php';
-		$connect = new Connect();
-		$connection = $connect->connect();
-		
-		require_once 'updated-classes/feed.class.php';
-		$feed = new Feed( $connection );
-		$feed->get_feed_by_id( 1 );
-		
-		$feed->check_update();
-		
-		if ( $feed->check_update() ){
-		
-			require_once 'updated-classes/service-properties.class.php';
-			$service = new Service_Properties();
-			
-			$now = new DateTime();
-			
-			$service_args = array(
-				'feed_id' => 1,
-				'start_date' => $now->format('Y-m-d H:i:s'),
-				'minutes' => 20,
-			);
-			
-			$service->do_updates_service( $service_args, true, false, true );
-			
-			$feed->set_updated_now();
-		
-		} // end if
-		
-	} // end do_get_updates
 	
 } // end Cron
 

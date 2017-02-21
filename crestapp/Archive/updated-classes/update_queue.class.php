@@ -199,9 +199,17 @@ class Update_Queue {
 	} // end get_id_from_response
 	
 	
-	public function remove_property( $property_id ){
+	public function remove_properties( $property_ids ){
 		
-		$sql = "DELETE FROM update_queue WHERE Property_ID='$property_id'";
+		$values = array();
+		
+		foreach( $property_ids as $property_id ){
+			
+			$values[] = "'" . $property_id . "'";
+			
+		} // end foreach
+		
+		$sql = "DELETE FROM update_queue WHERE Property_ID IN (" . implode( ',', $values ) . ")";
 		
 		$this->connection->query( $sql );
 		

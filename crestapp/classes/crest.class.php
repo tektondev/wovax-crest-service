@@ -2,60 +2,190 @@
 
 class Crest {
 	
-	public function authenticate( $token, $token_expires, $user, $pwd ){
+	
+	public function get_property_updates( $feed, $args, $types = array() ){
 		
-		if ( $token && ( strtotime( $token_expires ) > strtotime( 'now' ) ) ) {
+		$properties = array();
 			
-			return true;
+		if ( empty( $types ) ) $types = array( 'residential-sale','residential-rent','commercial-sale','commercial-lease');
+		
+		
+		foreach( $types as $type ){
+		
+			$response_ids = $this->get_properties_delta( $feed, $args, $type );
 			
-		} else {
+			sleep( 1 );
 			
-			$xml = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Header/><soapenv:Body/></soapenv:Envelope>';
-
-			$headers = array(
-				'Content-Type: text/xml',
-				'Accept-Encoding: gzip,deflate',
-				'SOAPAction: "http://rfg.realogy.com/Btt/AuthenticationManagement/Services/2009/05/AuthenticationManagementServiceContract/Authenticate"',
-				'Host: auth.ws.realogyfg.com',
-				'Connection: Keep-Alive',
-				'Cookie: OBBasicAuth=fromDialog; ObSSOCookie=loggedoutcontinue',
-				//'Cookie2: $Version=1',
-				'Authorization: Basic ' . base64_encode( $user . ':' . $pwd ),
-			);
-			
-			$process = curl_init( 'https://auth.ws.realogyfg.com/AuthenticationService/AuthenticationMgmt.svc' );
-			
-			curl_setopt($process, CURLOPT_HTTPHEADER, $headers );
-			curl_setopt($process, CURLOPT_TIMEOUT, 30);
-			curl_setopt($process, CURLOPT_POST, 1);
-			curl_setopt($process, CURLOPT_POSTFIELDS, $xml);
-			curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
-			curl_setopt($process, CURLOPT_ENCODING, '');
-			
-			$response = curl_exec($process);
-			
-			preg_match( '/<a:Token>(.*)<\/a:Token>/', $response, $matches, PREG_OFFSET_CAPTURE );
-			
-			preg_match( '/<a:Expiration>(.*)<\/a:Expiration>/', $response, $expires, PREG_OFFSET_CAPTURE );
-			
-			if ( ! empty( $matches[1][0] ) && ! empty( $expires[1][0] )){
+			$properties = array_merge( $response_ids, $properties );
+		
+		} // end foreach
+		
+		return $properties;
+		
+	} // end get_crest_updates
+	
+	
+	protected function get_properties_delta( $feed, $args, $type ){
+		
+		ini_set( 'max_execution_time', 3600 );
+		
+		set_time_limit ( 3600 ); 
+		
+		$date = new DateTime( $args['end_time'] );
+		
+		$end_time = $date->format('Y-m-d\TH:i:s.u');
+		
+		$date->modify( '-' . $args['minutes'] . ' minutes');
+		
+		$start_time = $date->format('Y-m-d\TH:i:s.u');
+		
+		$response = false;
+		
+		$token = $feed->get_token();
+		
+		$cookie = explode( '=' , $token );
+		
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->DeltaCriteria = new stdClass();
+		$params->DeltaCriteria->LastUpdateFromDate = $start_time;
+		$params->DeltaCriteria->LastUpdateToDate = $end_time;
+		$params->DeltaCriteria->BrandCode = $feed->get_brand_code();
+		
+		try {
+		
+			switch( $type ){
 				
-				return array(
-					'token' => $matches[1][0],
-					'token_expires' => $expires[1][0],
-				);
+				case 'residential-sale':
+					$response = $soap_client->ResidentialSaleListingDeltaGet( $params );
+					break;
+				case 'commercial-sale':
+					$response = $soap_client->CommercialSaleListingDeltaGet( $params );
+					break;
+				case 'residential-rent':
+					$response = $soap_client->ResidentialRentalListingDeltaGet( $params );
+					break;
+				case 'commercial-lease':
+					$response = $soap_client->CommercialLeaseListingDeltaGet( $params );
+					break;
+					
+			} // end switch
+		
+		} catch( Exception $e ) {
+			
+			$response_ids = array();
+			
+		} // end catch
+		
+		$response_ids = $this->get_ids_from_response( $response, $type );
+		
+		return $response_ids;
+		
+	} // end 
+	
+	
+	protected function get_ids_from_response( $response, $type ){
+		
+		$ids = array();
+		
+		if ( isset( $response->UpdatedListings->UpdatedEntity ) && is_array( $response->UpdatedListings->UpdatedEntity ) ){
+			
+			$responses = $response->UpdatedListings->UpdatedEntity;
+			
+			foreach( $responses as $property ){
 				
-			} else {
+				$ids[ $property->EntityId ] = array( 'id' => $property->EntityId, 'status' => $property->Status, 'type' => $type );
 				
-				return false;
-				
-			}// end if
+			} // end foreach
 			
 		} // end if
 		
-	} // end authenticate
+		return $ids;
+		
+	} // end get_id_from_response
 	
 	
+	public function get_properties_detail( $feed, $type, $property_ids ){
+		
+		$properties_detail = array();
+		
+		$sets = array_chunk( $property_ids, 10 );
+		
+		if ( $feed->authenticate() ){
+		
+			foreach( $sets as $set ){
+				
+				$temp_prop = $this->detail_get( $feed, $type, $set );
+				
+				$properties_detail = array_merge( $properties_detail, $temp_prop );
+				
+				sleep( 1 );
+				
+			} // end get_properties_detail
+		
+		} // end if
+		
+		return $properties_detail;
+		
+	} // end get_properties_detail
+	
+	
+	public function detail_get( $feed, $type, $property_ids  ){
+		
+		$properties = array();
+		
+		$cookie = explode( '=' , $feed->get_token() );
+		
+		//$soap_client = new DummySoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->ListingIDs = new stdClass();
+		$params->ListingIDs->guid = $property_ids;
+		
+		try {
+		
+		switch( $type ){
+			
+			case 'residential-sale':
+				$response = $soap_client->ResidentialSaleListingDetailGet( $params );
+				if ( isset( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) && is_array( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) ) {
+					$properties = $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail;
+				} // end if
+				break;
+			case 'commercial-sale':
+				$response = $soap_client->CommercialSaleListingDetailGet( $params );
+				if ( isset( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) && is_array( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ) {
+					$properties = $response->CommercialSaleListingDetails->CommercialSaleListingDetail;
+				} // end if
+				break;
+			case 'residential-rent':
+				$response = $soap_client->ResidentialRentalListingDetailGet( $params );
+				if ( isset( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) && is_array( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) ) {
+					$properties = $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail;
+				} // end if
+				break;
+			case 'commercial-lease':
+				$response = $soap_client->CommercialLeaseListingDetailGet( $params );
+				if ( isset( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) && is_array( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ) {
+					$properties = $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail;
+				} // end if
+				break;
+				
+		} // end switch
+		
+		} catch( Exception $e ){
+		}
+		
+		//var_dump( $response );
+		
+		
+		return $properties;
+		
+	} // end delta_get
 	
 	
 	
@@ -352,3 +482,14 @@ class Crest {
 	
 	
 } // end Crest
+
+
+class DummySoapClient extends SoapClient {
+    function __construct($wsdl, $options) {
+        parent::__construct($wsdl, $options);
+    }
+    function __doRequest($request, $location, $action, $version, $one_way = 0) {
+        var_dump( $request );
+		return parent::__doRequest($request, $location, $action, $version, $one_way);
+    }
+}

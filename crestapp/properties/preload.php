@@ -58,15 +58,15 @@ var crest = {
 				
 				} else {
 					
-					crest.feed.clean_properties();
+					//crest.feed.clean_properties();
 					
-					var pkeys = Object.keys( crest.feed.populate.properties );
+					//var pkeys = Object.keys( crest.feed.populate.properties );
 					
-					crest.msg.add_msg( pkeys.length + ' Active Properties Found', 'update' );
+					//crest.msg.add_msg( pkeys.length + ' Active Properties Found', 'update' );
 					
-					crest.msg.add_msg( 'Adding Properties to Data Base...', 'action' );
+					crest.msg.add_msg( 'All Done', 'action' );
 					
-					crest.feed.save_properties_recursive( false, false );
+					//crest.feed.save_properties_recursive( false, false );
 					
 					//crest.feed.add_to_queue();
 					
@@ -76,35 +76,32 @@ var crest = {
 			
 			get_properties_callback: function( response, args ){ 
 				
-				var count_array = new Array();
-				
-				var json = JSON.parse( response );
-				
-				if ( json ){
-					
-					count_array = Object.keys( json.response );
-					
-					for ( var key in json.response ) {
-						// skip loop if the property is from prototype
-						if ( ! json.response.hasOwnProperty( key ) ) continue;
-						
-						if ( ! crest.feed.populate.properties.hasOwnProperty( key ) ) {
-						
-							crest.feed.populate.properties[ key ] =  json.response[ key ];
-						
-						}// end if
-						
-					} // end for
-					
-				} // end if
+				//var count_array = new Array();
 				
 				var inc = jQuery('#feed-i').val();
 				
-				var tb_row = '<tr><td>&rarr; ' + args.render_date + ' (' + args.day_part + ' of ' + inc + ' )</td><td>' + count_array.length + ' Results Found</td></tr>';
+				try {
+				
+					var json = JSON.parse( response );
+					
+					if ( json ){
+					
+						var tb_row = '<tr><td>&rarr; ' + args.render_date + ' (' + args.day_part + ' of ' + inc + ' )</td><td>' + response.data + ' Results Found</td></tr>';
+						
+					} // end if
+					
+				} catch( e ){
+					
+					var tb_row = '<tr><td>&rarr; ' + args.render_date + ' (' + args.day_part + ' of ' + inc + ' ) Something Went Wrong</td><td>NA</td></tr>';
+					
+				} // end catch
+				
+				
+				
+				var inc = jQuery('#feed-i').val();
 				
 				jQuery('#feed-results').prepend( tb_row );
-				
-				console.log( crest.feed.populate.properties );
+
 				
 				crest.feed.populate.timer = setTimeout( function(){ 
 				
@@ -160,7 +157,7 @@ var crest = {
 			
 			var mins = ( dpart * set_i );
 			
-			var args = { days: pday, start_date: date, render_date: c_date, minutes:mins, minutes_start: smins, day_index: pday, day_part: dpart };
+			var args = { days: pday, end_time: date, render_date: c_date, minutes:mins, minutes_start: smins, day_index: pday, day_part: dpart };
 			
 			console.log( args );
 			
@@ -168,9 +165,9 @@ var crest = {
 			
 		}, // end get_properties 
 		
-		clean_properties:function(){
+		//clean_properties:function(){
 			
-			console.log( crest.feed.populate.properties );
+			//console.log( crest.feed.populate.properties );
 			
 			/*for( var p = 0; p < crest.feed.populate.properties.length; p++ ){
 				
@@ -185,22 +182,22 @@ var crest = {
 			console.log( crest.feed.populate.properties );*/
 			
 			
-			for ( var key in crest.feed.populate.properties ) {
+			//for ( var key in crest.feed.populate.properties ) {
 				// skip loop if the property is from prototype
-				if ( ! crest.feed.populate.properties.hasOwnProperty( key ) ) continue;
+				///if ( ! crest.feed.populate.properties.hasOwnProperty( key ) ) continue;
 				
-				if ( 'DE' == crest.feed.populate.properties[ key ]['status'] ){
+				//if ( 'DE' == crest.feed.populate.properties[ key ]['status'] ){
 					
-					delete crest.feed.populate.properties[ key ];
+					///delete crest.feed.populate.properties[ key ];
 					
-				} // end if
+				///} // end if
 				
-			} // end for
+			///} // end for
 			
-			console.log( crest.feed.populate.properties );
+			///console.log( crest.feed.populate.properties );
 			
 			
-		}, // end clean_properties
+		///}, // end clean_properties
 		
 		/*add_to_queue: function(){
 			
@@ -219,7 +216,7 @@ var crest = {
 			
 		}, //end add_to_queue*/
 		
-		save_properties_recursive:function( response, data ){
+		/*save_properties_recursive:function( response, data ){
 			
 			console.log( crest.feed.populate.properties );
 			
@@ -258,7 +255,7 @@ var crest = {
 				
 				console.log( crest.feed.populate.properties );*/
 				
-				var data = {
+				/*var data = {
 					properties: temp_object,
 					feed_id: 1,
 				}; 
@@ -274,7 +271,7 @@ var crest = {
 			
 			console.log( crest.feed.populate.properties );
 			
-		} // end 
+		} // end */
 		
 	}, // end feed
 	
@@ -282,7 +279,7 @@ var crest = {
 		
 		services: {
 			
-			feed_popluate: 'properties/get-updates',
+			feed_popluate: 'properties/queue/update.php',
 			update_queue: 'properties/insert-queue',
 		},
 		

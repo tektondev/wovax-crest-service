@@ -5,16 +5,16 @@ class Update_Queue {
 	
 	protected $connection;
 	protected $crest;
-	protected $feed_factory;
+	protected $feed;
 	
 	protected $types = array( 'residential-sale','residential-rent','commercial-sale','commercial-lease');
 	
 	
-	public function __construct( $connection, $crest, $feed_factory ){
+	public function __construct( $connection, $crest, $feed ){
 		
 		$this->connection = $connection;
 		$this->crest = $crest;
-		$this->feed_factory = $feed_factory;
+		$this->feed = $feed;
 		
 	} // end __construct
 	
@@ -63,7 +63,9 @@ class Update_Queue {
 	} // end get_update_ids
 	
 	
-	public function get_crest_updates( $feed_id, $args ){
+	public function get_crest_updates( $args ){
+		
+		$properties = array();
 		
 		$now = new DateTime();
 		
@@ -75,23 +77,19 @@ class Update_Queue {
 		
 		$args = array_merge( $default_args, $args );
 		
-		$feed = $this->feed_factory->get_feed_by_id( $feed_id );
-		
-		if ( $feed ){
-		
-			$authenticate = $this->crest->authenticate( $feed->get_token(), $feed->get_token_expires(), $feed->get_feed_user(), $feed->get_feed_pwd() );
+		if ( $this->feed->authenticate() ){
 			
-			if ( is_array( $authenticate ) ) $feed->update_token( $authenticate );
-			
-			$properties = $this->crest->get_property_updates( $feed, $args );
+			$properties = $this->crest->get_property_updates( $this->feed, $args );
 			
 			if ( $args['save'] ){
 				
-				$this->save_properties( $feed->get_feed_id(), $properties );
+				$this->save_properties( $this->feed->get_feed_id(), $properties );
 				
 			} // end if
 		
 		} // end if
+		
+		return $properties;
 		
 	} // end get_updates
 	
@@ -140,6 +138,23 @@ class Update_Queue {
 		return false;
 		
 	} // end check_feed_property_exists
+	
+	
+	public function remove_properties( $property_ids ){
+		
+		$values = array();
+		
+		foreach( $property_ids as $property_id ){
+			
+			$values[] = "'" . $property_id . "'";
+			
+		} // end foreach
+		
+		$sql = "DELETE FROM update_queue WHERE Property_ID IN (" . implode( ',', $values ) . ")";
+		
+		$this->connection->query( $sql );
+		
+	} // end remove_property
 	
 	
 	

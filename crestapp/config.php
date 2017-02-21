@@ -12,6 +12,8 @@ define( 'CRESTAPPBASEURL' , 'http://crestapp.tektondev.com/' );
 
 define( 'CRESTAPPPATH' , dirname( __FILE__ ) . '/' );
 
+define( 'CRESTAPPCLASSPATH' , dirname( __FILE__ ) . '/classes/' );
+
 define( 'CRESTAPPDBNAME' , 'tektondev_crest' );
 
 define( 'CRESTAPPDBUSER' , 'crest_properties' );

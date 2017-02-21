@@ -56,6 +56,108 @@ class Crest {
 	} // end authenticate
 	
 	
+	public function get_property_updates( $feed, $args, $types = array() ){
+		
+		$properties = array();
+			
+		if ( empty( $types ) ) $types = array( 'residential-sale','residential-rent','commercial-sale','commercial-lease');
+		
+		
+		foreach( $types as $type ){
+		
+			$response_ids = $this->get_properties_delta( $feed, $args, $type );
+			
+			sleep( 1 );
+			
+			$properties = array_merge( $response_ids, $properties );
+		
+		} // end foreach
+		
+		return $properties;
+		
+	} // end get_crest_updates
+	
+	
+	protected function get_properties_delta( $feed, $args, $type = 'residential-sale' ){
+		
+		ini_set( 'max_execution_time', 3600 );
+		
+		set_time_limit ( 3600 ); 
+		
+		$date = new DateTime( $args['end_time'] );
+		
+		$end_time = $date->format('Y-m-d\TH:i:s.u');
+		
+		$date->modify( '-' . $args['minutes'] . ' minutes');
+		
+		$start_time = $date->format('Y-m-d\TH:i:s.u');
+		
+		$response = false;
+		
+		$token = $feed->get_token();
+		
+		$cookie = explode( '=' , $token );
+		
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->DeltaCriteria = new stdClass();
+		$params->DeltaCriteria->LastUpdateFromDate = $start_time;
+		$params->DeltaCriteria->LastUpdateToDate = $end_time;
+		$params->DeltaCriteria->BrandCode = $feed->get_brand_code();
+		
+		try {
+		
+			switch( $type ){
+				
+				case 'residential-sale':
+					$response = $soap_client->ResidentialSaleListingDeltaGet( $params );
+					break;
+				case 'commercial-sale':
+					$response = $soap_client->CommercialSaleListingDeltaGet( $params );
+					break;
+				case 'residential-rent':
+					$response = $soap_client->ResidentialRentalListingDeltaGet( $params );
+					break;
+				case 'commercial-lease':
+					$response = $soap_client->CommercialLeaseListingDeltaGet( $params );
+					break;
+					
+			} // end switch
+		
+		} catch( Exception $e ) {
+			
+			$response_ids = array();
+			
+		} // end catch
+		
+		$response_ids = $this->get_ids_from_response( $response, $type );
+		
+		return $response_ids;
+		
+	} // end 
+	
+	
+	protected function get_ids_from_response( $response, $type ){
+		
+		$ids = array();
+		
+		if ( isset( $response->UpdatedListings->UpdatedEntity ) && is_array( $response->UpdatedListings->UpdatedEntity ) ){
+			
+			$responses = $response->UpdatedListings->UpdatedEntity;
+			
+			foreach( $responses as $property ){
+				
+				$ids[ $property->EntityId ] = array( 'id' => $property->EntityId, 'status' => $property->Status, 'type' => $type );
+				
+			} // end foreach
+			
+		} // end if
+		
+		return $ids;
+		
+	} // end get_id_from_response
 	
 	
 	

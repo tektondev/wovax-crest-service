@@ -15,8 +15,8 @@ class Feed {
 	
 	public function get_table(){ return $this->table; }
 	public function get_feed_id(){ return $this->feed_id; }
-	protected function get_feed_user(){ return $this->user; }
-	protected function get_feed_pwd(){ return $this->pwd; }
+	public function get_feed_user(){ return $this->user; }
+	public function get_feed_pwd(){ return $this->pwd; }
 	public function get_brand_code(){ return $this->brand_code; }
 	public function get_updated() { return $this->updated; }
 	public function get_token(){ return $this->token; }
@@ -37,65 +37,6 @@ class Feed {
 		$this->connection = $connection;
 		
 	} // end __construct
-	
-	
-	public function authenticate(){
-		
-		require_once 'crest.class.php';
-		$crest = new Crest();
-		
-		$response = $crest->authenticate( $this->token, $this->token_expires, $this->user, $this->pwd );
-		
-		if ( is_array( $response ) ){
-			
-			$this->update_token( $response );
-			
-			return true;
-			
-		} else if ( $response ){
-			
-			return true;
-			
-		} else {
-			
-			return false;
-			
-		} // end if
-		
-		if ( $response && 'update' == $response ){
-			
-			$this->update_token();
-			
-			return true;
-			
-		} else if ( $response ){
-			
-			return true;
-			
-		} else {
-			
-			return false;
-			
-		} // end if
-		
-	} // end authenticate
-	
-	
-	public function get_feed_by_id( $feed_id ){
-		
-		$sql = "SELECT * FROM $this->table WHERE id='$feed_id' LIMIT 1";
-		
-		$results = $this->connection->query( $sql );
-		
-		if ( $results->num_rows > 0) {
-			
-			$row = $results->fetch_assoc();
-			
-			$this->set_feed_by_db_row( $row );
-			
-		} // end if
-		
-	} // end set_feed_by_id 
 	
 	
 	public function set_feed_by_db_row( $feed ){

@@ -152,26 +152,42 @@ class Crest {
 			
 			case 'residential-sale':
 				$response = $soap_client->ResidentialSaleListingDetailGet( $params );
-				if ( isset( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) && is_array( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) ) {
-					$properties = $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail;
+				if ( isset( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) ) {
+					if ( is_array( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) ) {
+						$properties = $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail;
+					} else {
+						$properties = array( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail );
+					} // end if
 				} // end if
 				break;
 			case 'commercial-sale':
 				$response = $soap_client->CommercialSaleListingDetailGet( $params );
-				if ( isset( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) && is_array( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ) {
-					$properties = $response->CommercialSaleListingDetails->CommercialSaleListingDetail;
+				if ( isset( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ){
+					if ( is_array( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ) {
+						$properties = $response->CommercialSaleListingDetails->CommercialSaleListingDetail;
+					} else {
+						$properties = array($response->CommercialSaleListingDetails->CommercialSaleListingDetail);
+					 } // end if
 				} // end if
 				break;
 			case 'residential-rent':
 				$response = $soap_client->ResidentialRentalListingDetailGet( $params );
-				if ( isset( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) && is_array( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) ) {
-					$properties = $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail;
+				if ( isset( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) ){
+					 if ( is_array( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) ) { 
+						$properties = $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail;
+					} else {
+							$properties = array( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail);
+					 } // end if
 				} // end if
 				break;
 			case 'commercial-lease':
 				$response = $soap_client->CommercialLeaseListingDetailGet( $params );
-				if ( isset( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) && is_array( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ) {
-					$properties = $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail;
+				if ( isset( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ){
+					 if ( is_array( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ) {
+						$properties = $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail;
+					} else {
+						$properties = array( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail );
+					 } // end if
 				} // end if
 				break;
 				
@@ -179,9 +195,6 @@ class Crest {
 		
 		} catch( Exception $e ){
 		}
-		
-		//var_dump( $response );
-		
 		
 		return $properties;
 		

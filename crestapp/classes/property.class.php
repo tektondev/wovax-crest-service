@@ -260,7 +260,40 @@ class Property {
 		
 		$this->fields['PropertyListingFeatures'] = implode( ',' , $p_features );
 		
+		$this->fields['videoURL'] = $this->get_crest_video_url();
+		
 	} // end set_from_crest
+	
+	
+	public function get_crest_video_url(){
+		
+		$video_url = '';
+		
+		$images = $this->get_field_value('ListingMedia');
+		
+		if ( $images && is_array( $images ) ){
+			
+			foreach( $images as $image ){
+				
+				if ( isset( $image->MediaFormat ) && 'Video' == $image->MediaFormat ){
+					
+					if ( isset( $image->URL ) ){
+						
+						$video_url = $image->URL;
+						
+						break;
+						
+					} // end if
+					
+				} // end if
+				
+			} // end foreach
+			
+		} // end if
+		
+		return $video_url;
+		
+	} // end get_crest_video_url
 	
 	
 	public function get_property_description( $remark ){

@@ -31,6 +31,8 @@ class Property_Factory {
 		$properties = array();
 		
 		$crest_properties = $this->crest->get_properties_detail( $feed, $type, $property_ids );
+		
+		//var_dump( $crest_properties );
 		 
 		foreach( $crest_properties as $crest_property ){
 			 

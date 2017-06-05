@@ -16,6 +16,8 @@ class Feed_Factory {
 	
 	public function get_feed(){
 		
+		require_once CRESTAPPCLASSPATH . 'feed.class.php';
+		
 		$feed = new Feed();
 		
 		return $feed;

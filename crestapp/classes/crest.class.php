@@ -132,6 +132,62 @@ class Crest {
 	} // end get_properties_detail
 	
 	
+	public function single_detail_get( $feed, $type, $property_id, $log ){
+		
+		$property = false;
+		
+		$cookie = explode( '=' , $feed->get_token() );
+		
+		//$soap_client = new DummySoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->ListingIDs = new stdClass();
+		$params->ListingIDs->guid = $property_id;
+		
+		try {
+		
+		switch( $type ){
+			
+			case 'ResidentialSale':
+				$response = $soap_client->ResidentialSaleListingDetailGet( $params );
+				if ( isset( $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail ) ) {
+					$property = $response->ResidentialSaleListingDetails->ResidentialSaleListingDetail;
+				} // end if
+				break;
+			case 'CommercialSale':
+				$response = $soap_client->CommercialSaleListingDetailGet( $params );
+				if ( isset( $response->CommercialSaleListingDetails->CommercialSaleListingDetail ) ){
+					$property = $response->CommercialSaleListingDetails->CommercialSaleListingDetail;
+				} // end if
+				break;
+			case 'ResidentialRental':
+				$response = $soap_client->ResidentialRentalListingDetailGet( $params );
+				if ( isset( $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail ) ){
+					$property = $response->ResidentialRentalListingDetails->ResidentialRentalListingDetail;
+				} // end if
+				break;
+			case 'CommercialLease':
+				$response = $soap_client->CommercialLeaseListingDetailGet( $params );
+				if ( isset( $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail ) ){
+						$property = $response->CommercialLeaseListingDetails->CommercialLeaseListingDetail;
+				} // end if
+				break;
+				
+		} // end switch
+		
+		} catch( Exception $e ){
+			
+			$log->add_record( 'Crest Property Failed: ' . $property_id . ', type: ' . $type  );
+			
+		}
+		
+		return $property;
+		
+	} // end delta_get
+	
+	
 	public function detail_get( $feed, $type, $property_ids  ){
 		
 		$properties = array();
@@ -199,6 +255,56 @@ class Crest {
 		return $properties;
 		
 	} // end delta_get
+	
+	
+	public function get_properties_by_office( $office, $feed, $type, $status ){
+		
+		$properties = array();
+		
+		$cookie = explode( '=' , $feed->get_token() );
+		
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		//$soap_client = new DummySoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->OfficeID = $office->id;
+		$params->ListingType = new stdClass();
+		$params->ListingType->ListingType = $type;
+		$params->ListingStatus = $status;
+		
+		try {
+		
+			$response = $soap_client->ListingSearch2( $params );
+		
+		} catch( Exception $e ){
+			
+			$response = false;
+			
+		} // end try
+		
+		if ( ( $response !== false ) && ( isset( $response->ListingSearchResult ) ) ){
+			
+			if ( is_object( $response->ListingSearchResult ) && isset( $response->ListingSearchResult->ListingID )  ) {
+				
+				$properties[ $response->ListingSearchResult->ListingID ] = $response->ListingSearchResult;
+				
+			} else if ( is_array( $response->ListingSearchResult ) ){
+				
+				foreach( $response->ListingSearchResult as $index => $property ){
+					
+					$properties[ $property->ListingID ] = $property;
+					
+				} // end foreach
+				
+			} // end if
+			
+		} // end if
+		
+		return $properties;
+		
+	} // end get_properties_by_office
 	
 	
 	

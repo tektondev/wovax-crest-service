@@ -4,9 +4,10 @@ class Property_Factory {
 	
 	protected $connection;
 	protected $crest;
+	protected $feed;
 	
 	
-	public function __construct( $connection = false, $crest = false ){
+	public function __construct( $connection = false, $crest = false, $feed = false ){
 		
 		$this->connection = $connection;
 		$this->crest = $crest;
@@ -19,7 +20,7 @@ class Property_Factory {
 	
 	public function get_property(){
 		
-		$property = new Property( $this->connection );
+		$property = new Property( $this->connection, $this->feed, $this->crest  );
 		
 		return $property;
 		

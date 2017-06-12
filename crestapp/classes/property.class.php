@@ -4,6 +4,8 @@ class Property {
 	
 	public $fields;
 	protected $connection = false;
+	protected $crest = false;
+	protected $feed = false;
 	protected $exclude_db = array(
 		'AssociatedAgents',
 		'ListingRemarks',
@@ -25,7 +27,11 @@ class Property {
 	);
 	
 	
-	public function __construct( $connection = false ){
+	public function __construct( $connection = false, $feed = false, $crest = false ){
+		
+		$this->feed = $feed;
+		
+		$this->crest = $crest;
 		
 		$this->connection = $connection;
 		
@@ -54,7 +60,6 @@ class Property {
 	public function set_from_crest( $p ) {
 		
 		$primary_agent = ( isset( $p->CoreListingDetail->AssociatedAgents->Agent ) ) ? $this->get_primary_agent( $p->CoreListingDetail->AssociatedAgents->Agent  ) : $this->get_primary_agent( array() );
-		
 		
 		$this->fields = array(
 			'Property_ID' => ( isset( $p->CoreListingDetail->ListingId) )? $p->CoreListingDetail->ListingId : '',
@@ -99,8 +104,10 @@ class Property {
 			'BrandCode' => ( isset( $p->CoreListingDetail->Brand->BrandCode ) )? $p->CoreListingDetail->Brand->BrandCode : '',
 			'AssociatedAgents' => ( isset( $p->CoreListingDetail->AssociatedAgents ) )? $p->CoreListingDetail->AssociatedAgents : array(),
 			
+			'PrimaryAgentEmail' => $primary_agent['email'],
 			'PrimaryAgentName' => $primary_agent['name'],
 			'PrimaryAgentId' => $primary_agent['crest_id'],
+			'PrimaryAgentPhone' => $primary_agent['phone'],
 			'PrimaryAgentStaffId' => $primary_agent['staff_id'],
 			
 			//'PropertyDescription' => ( isset( $p->CoreListingDetail->ListingRemarks->Remark->RemarkText ) )? $p->CoreListingDetail->ListingRemarks->Remark->RemarkText : '',
@@ -275,7 +282,7 @@ class Property {
 			
 			foreach( $images as $image ){
 				
-				if ( isset( $image->MediaFormat ) && 'Video' == $image->MediaFormat ){
+				if (  isset( $image->MediaFormat ) && ( ( 'Video' == $image->MediaFormat ) || ( 'URL' == $image->MediaFormat ) && ( strpos( $image->URL, 'youtube' ) !== false ) ) ){
 					
 					if ( isset( $image->URL ) ){
 						
@@ -391,9 +398,9 @@ class Property {
 	} // end delete_property_by_id
 	
 	
-	public function insert(){
+	public function insert($feed = false, $crest = false ){
 		
-		$this->insert_agents();
+		$this->insert_agents( $feed = false, $crest = false );
 		
 		$this->insert_property_features();
 		
@@ -410,7 +417,7 @@ class Property {
 	} // end insert
 	
 	
-	public function insert_agents(){
+	public function insert_agents( $feed = false, $crest = false ){
 		
 		$agents = $this->get_field_value('AssociatedAgents');
 		
@@ -422,9 +429,11 @@ class Property {
 					
 					$insert_agent = $this->get_agent( $agent );
 					
+					//var_dump( $insert_agent );
+					
 					$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary']);
 					
-					$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['team_id'], $insert_agent['staff_id'] );
+					$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
 					
 				} // end foreach;
 				
@@ -432,9 +441,11 @@ class Property {
 				
 				$insert_agent = $this->get_agent( $agents->Agent );
 				
+				//var_dump( $insert_agent );
+				
 				$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary'] );
 				
-				$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['team_id'], $insert_agent['staff_id'] );
+				$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
 				
 			} // end if
 			
@@ -452,11 +463,11 @@ class Property {
 	} // end insert_image
 	
 	
-	public function insert_agent_record( $agent_id, $agent_name, $team_id, $staff_id){
+	public function insert_agent_record( $agent_id, $agent_name, $email, $phone, $team_id, $staff_id){
 		
 		if ( ! $this->check_existing( 'crest_agents', 'agent_id', $agent_id ) ){
 		
-			  $sql = "INSERT INTO crest_agents (agent_id, agent_display_name, team_id, staff_id) VALUES ( '$agent_id','$agent_name','$team_id','$staff_id' )";
+			  $sql = "INSERT INTO crest_agents (agent_id, agent_display_name, email, phone, team_id, staff_id) VALUES ( '$agent_id','$agent_name','$email','$phone','$team_id','$staff_id' )";
 			  
 			  $this->connection->query( $sql );
 		
@@ -473,7 +484,17 @@ class Property {
 			'name' => ( isset( $agent->Name->DisplayName ) ) ? $agent->Name->DisplayName : '',
 			'team_id' => ( isset( $agent->TeamId ) ) ? $agent->TeamId : '',
 			'staff_id' => ( isset( $agent->StaffId ) ) ? $agent->StaffId : '', 
+			'email' => '',
+			'phone' => '',
 		);
+		
+		if ( $insert_agent['is_primary'] ){
+			
+			$insert_agent['email'] = $this->get_field_value('PrimaryAgentEmail');
+			
+			$insert_agent['phone'] = $this->get_field_value('PrimaryAgentPhone');
+			
+		} // end if
 		
 		return $insert_agent;
 		
@@ -483,9 +504,11 @@ class Property {
 	protected function get_primary_agent( $agents ){
 		
 		$primary = array(
-			'name' 	=> '',
+			'name' 		=> '',
 			'crest_id' 	=> '',
-			'staff_id' => '',
+			'staff_id' 	=> '',
+			'email' 	=>	'',
+			'phone' 	=> '',
 		);
 		
 		if ( is_array( $agents ) ){
@@ -512,9 +535,126 @@ class Property {
 			
 		}// end if
 		
+		if ( ! empty( $primary['crest_id'] ) ){
+			
+			$agent_contact = $this->get_agent_contact( $primary['crest_id'] );
+			
+			$primary['email'] = $agent_contact['email'];
+			$primary['phone'] = $agent_contact['phone'];
+			
+		} // end if
+		
 		return $primary;
 		
 	} // end 
+	
+	
+	protected function get_agent_contact( $agent_id ){
+		
+		$agent_contact = array(
+			'email' => '',
+			'phone' => '',
+		);
+	
+		
+		$sql = "SELECT * FROM crest_agents WHERE agent_id='$agent_id'";
+		
+		$result = $this->connection->query( $sql );
+		
+		if ( $result->num_rows > 0 ) {
+			
+			$row = $result->fetch_assoc();
+			
+			if ( ! empty( $row['email'] ) ){
+				
+				$agent_contact['email'] = $row['email'];
+				$agent_contact['phone'] = $row['phone'];
+				
+			} else {
+				
+				$crest_info = $this->get_agent_info_crest( $agent_id ); 
+				
+				$email = $crest_info['email'];
+				$phone = $crest_info['phone'];
+				
+				$agent_contact['email'] = $email;
+				$agent_contact['phone'] = $phone;
+				
+				$usql = "UPDATE crest_agents SET email='$email',phone='$phone' WHERE agent_id='$agent_id'";
+				
+				$results = $this->connection->query( $usql );
+				
+			}// end if
+			
+		} else {
+			
+			$crest_info = $this->get_agent_info_crest( $agent_id );
+				
+			$email = $crest_info['email'];
+			$phone = $crest_info['phone'];
+				
+			$agent_contact['email'] = $email;
+			$agent_contact['phone'] = $phone;
+			
+		}// end if
+		
+		return $agent_contact;
+		
+	} // end get_agent_email
+	
+	
+	protected function get_agent_info_crest( $agent_id ){
+		
+		$agent_info = array(
+			'phone' => 'na',
+			'email' => 'na',
+		);
+		
+		$crest_agent = $this->crest->get_agent( $agent_id, $this->feed );
+		
+		if ( $crest_agent ){
+			
+			if ( isset( $crest_agent->PersonDetail->DefaultPhoneNumber->Number ) ){
+				
+				$agent_info['phone'] = $crest_agent->PersonDetail->DefaultPhoneNumber->Number;
+				
+			} else {
+				
+				if ( isset( $crest_agent->PersonDetail->AdditionalPhoneNumbers ) ){
+					
+					if ( is_array( $crest_agent->PersonDetail->AdditionalPhoneNumbers ) ){
+						
+						if ( isset( $crest_agent->PersonDetail->AdditionalPhoneNumbers[0]->PhoneNumber->Number ) ){
+							
+							$agent_info['phone'] = $crest_agent->PersonDetail->AdditionalPhoneNumbers[0]->PhoneNumber->Number;
+							
+						} // end if
+						
+					} else {
+						
+						if ( isset( $crest_agent->PersonDetail->AdditionalPhoneNumbers->PhoneNumber->Number ) ){
+							
+							$agent_info['phone'] = $crest_agent->PersonDetail->AdditionalPhoneNumbers->PhoneNumber->Number;
+							
+						} // end if
+						
+					} // end if
+					
+				} // end if
+				
+			}// end if
+			
+			if ( isset( $crest_agent->PersonDetail->DefaultEmail )  ){
+				
+				$agent_info['email'] = $crest_agent->PersonDetail->DefaultEmail->EmailAddress;
+				
+			} // end if
+			
+		} // end if
+		
+		return $agent_info;
+		
+	} // end get_agent_email_crest
 	
 	
 	public function insert_property_features(){

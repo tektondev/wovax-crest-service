@@ -25,6 +25,37 @@ class Crest {
 	} // end get_crest_updates
 	
 	
+	public function get_agent( $agent_id, $feed ){
+		
+		$agent = false;
+		
+		$cookie = explode( '=' , $feed->get_token() );
+		
+		//$soap_client = new DummySoapClient( 'http://solows.realogyfg.com/V1.3/ListingRW/ListingService.Svc?wsdl', array('trace' => 1) );
+		$soap_client = new SoapClient( 'http://solows.realogyfg.com/V1.3/BrokerageRW/OfficeStaffService.Svc?wsdl', array('trace' => 1) );
+		$soap_client->__setCookie ( $cookie[0], $cookie[1] );
+		
+		$params = new stdClass();
+		$params->PersonIds = new stdClass();
+		$params->PersonIds->guid = $agent_id;
+		
+		try {
+			
+			$response = $soap_client->PersonDetailGet( $params );
+			
+			$agent = $response->Persons->Person;
+			
+		} catch( Exception $e ) {
+			
+			// do nothing
+			
+		} // end catch
+		
+		return $agent;
+		
+	} // end get_agent
+	
+	
 	protected function get_properties_delta( $feed, $args, $type ){
 		
 		ini_set( 'max_execution_time', 3600 );

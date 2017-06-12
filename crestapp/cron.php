@@ -87,11 +87,11 @@ class Cron extends Endpoint {
 			
 				require_once CRESTAPPCLASSPATH . 'property.class.php';
 				
-				$property = new Property( $connect->connect() );
+				$property = new Property( $connect->connect(), $feed, $crest );
 				
 				$property->set_from_crest( $crest_property );
 				
-				$property->insert();
+				$property->insert( $feed, $crest );
 				
 				$log->add_record( 'Property Inserted: ' . $update_property['Property_ID'] . ', ' . $update_property['type'] );
 				

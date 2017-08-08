@@ -56,6 +56,9 @@ class Property {
 	} // end getget_field_value
 	
 	
+	public function set_field( $key, $value ){ $this->fields[ $key ] = $value; }
+	
+	
 	
 	public function set_from_crest( $p ) {
 		
@@ -933,7 +936,7 @@ class Property {
 	} // end insert_image
 	
 	
-	protected function insert_property(){
+	public function insert_property( $echo = false ){
 		
 		$property_id = $this->get_field_value('Property_ID');
 		
@@ -947,7 +950,7 @@ class Property {
 		
 		} else {
 			
-			if ( $this->get_field_value('LastUpdatedDate') && ( strtotime( $this->get_field_value('LastUpdatedDate') ) > strtotime( $is_existing['LastUpdatedDate'] ) ) ) {
+			if ( strtotime( $this->get_field_value('LastUpdatedDate') ) > strtotime( $is_existing['LastUpdatedDate'] ) ) {
 			
 				$fields = $this->get_fields();
 				
@@ -957,19 +960,40 @@ class Property {
 					
 					if ( 'Property_ID' == $label || in_array( $label, $this->exclude_db ) ) continue;
 					
-					$qvalues[] = $label . "='" .  $value . "'";
+					if ( is_object( $value ) || is_array( $value ) ) $value = json_encode( $value );
+					
+					$qvalues[] = $label . "='" . $this->connection->real_escape_string( $value ) . "'";
 					
 				} // end foreach
 				
-				$sql = "UPDATE crest_properties SET " . implode( ',', $qvalue ) . " WHERE Property_ID='$property_id'";
+				$sql = "UPDATE crest_properties SET " . implode( ',', $qvalues ) . ",wovaxUpdated=now() WHERE Property_ID='$property_id'";
+				
+				//$sql = "UPDATE crest_properties SET " . implode( ',', $qvalues ) . ",wovaxUpdated=now()" WHERE Property_ID='$property_id'";
+				
+				//$values[] = "'" . $this->connection->real_escape_string( $value ) . "'";
+				
+				//$keys[] = $key;
+			
+			//} // end if
+			
+		//} // end foreach
+		
+		//$sql = "INSERT INTO crest_properties (" . implode( ',', $keys ) . ",wovaxUpdated ) VALUES ( " . implode( ',', $values  ) . ", now() )";
 				
 				$this->connection->query( $sql );
 				
-			} // end if
+				echo $property_id . ' updated';
+				
+			} else {
+				
+				echo $property_id . ' up-to-date';
+				
+			}// end if
 			
 		}// end if
 		
 	} // end insert_property
+	
 	
 	protected function check_existing( $table, $key, $value, $key2 = false, $value2 = false ){
 		

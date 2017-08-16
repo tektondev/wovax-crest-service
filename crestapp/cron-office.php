@@ -46,18 +46,7 @@ class Cron extends Endpoint {
 			
 			$this->add_update_property( $log, $connect, $crest_property );
 			
-		} // end foreach
-		
-		//require_once CRESTAPPCLASSPATH . 'property-manager.class.php';
-		//$property_manager = new Property_Manager();
-		
-		//$update_property_ids = $property_manager->get_feed_updates();
-
-		//$this->response( true, count( $update_property_ids ) . ' Properites Added to Queue', count( $update_property_ids ) );
-		
-		//$detail_property_ids = $property_manager->get_property_details();
-		
-		//$this->response( true, count( $detail_property_ids ) . ' Properites Parsed from Update Queue', $detail_property_ids ); 
+		} // end foreach 
 		
 	} // end do_request
 	
@@ -99,6 +88,8 @@ class Cron extends Endpoint {
 			$type = $office->next_type;
 			
 			$status = $office->next_status;
+			
+			//var_dump( $type, $status );
 			
 			$properties = $crest->get_properties_by_office( $office, $feed, $type, $status  );
 			

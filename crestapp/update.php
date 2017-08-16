@@ -45,7 +45,7 @@ class Update {
 		
 		$properties = $property_factory->get_db_properties();
 		
-		include_once 'includes/property-update.php';
+		include_once 'includes/property-update/property-update.php';
 		
 		//var_dump( $properties );
 		

@@ -91,6 +91,8 @@ class Cron extends Endpoint {
 				
 				$property->set_from_crest( $crest_property );
 				
+				$property->set_field( 'SourcePropertyType', $update_property['type'] );
+				
 				$property->insert( $feed, $crest );
 				
 				$log->add_record( 'Property Inserted: ' . $update_property['Property_ID'] . ', ' . $update_property['type'] );

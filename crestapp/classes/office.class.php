@@ -10,7 +10,7 @@ class Office {
 	public $next_type = false;
 	public $next_status = false;
 	public $last_updated_status = false;
-	public $do_status = array( 'Active','Pending','Closed');
+	public $do_status = array( 'Active','Pending');
 	
 	protected $connection;
 	
@@ -70,11 +70,8 @@ class Office {
 			
 		$stats = $this->do_status;
 		
-		var_dump( $this->next_type );
 		
-		var_dump( $this->next_type );
-		
-		if ( ( ( end( $stats ) == $this->next_type ) && ( end( $types ) == $this->next_status ) ) || empty( $this->next_type ) ){
+		if (  ( ( end( $types ) == $this->next_type ) && ( end( $stats ) == $this->next_status ) )  || empty( $this->next_type ) ){
 			
 			$this->insert_updated_now();
 			
@@ -151,31 +148,33 @@ class Office {
 			
 			$index = array_search( $this->last_updated_type, $types );
 			
+			$stat_index = array_search( $this->last_updated_status, $stats );
+			
+			if ( $stat_index === false ) $stat_index = 0;
+			
+			$next_index = ( $index + 1 );
+			
+			$next_s_index = ( $stat_index + 1 );
+			
 			// if end of stats and end of types do nothing
-			if ( ( end( $stats ) == $this->last_updated_status ) && ( end( $types ) == $this->last_updated_type ) ){
+			if ( ( $next_index >= count( $types ) )  && ( $next_s_index >= count( $stats ) ) ){
 				
-				$set['type'] = false;
+				$set['type'] = $types[0];
 				
-				$set['status'] = false;
-				
-			} else if( ( end( $stats ) == $this->last_updated_status ) && ! empty( $types[ ( $index + 1 ) ] )  ) {
+			} else if ( $next_s_index >= count( $stats ) ) {
 				
 				$set['type'] = $types[ ( $index + 1 ) ];
 				
-				$set['status'] = $stats[0];
-				
 			} else {
-				
 				$set['type'] = $this->last_updated_type;
-				
-				$status_index = array_search( $this->last_updated_status, $stats );
-				
-				$set['status'] = $stats[ ( $status_index + 1 ) ];
+				$set['status'] = $stats[ $next_s_index ];
 				
 			}// end if
 			
 			
 		} // end if
+		
+		var_dump( $set );
 		
 		return $set;
 		

@@ -819,11 +819,28 @@ class Property {
 		
 		if ( $images && is_array( $images ) ){
 			
+			$current_images = array();
+			
+			$property_id = $this->get_field_value('Property_ID');
+			
+			
+			$sql_images = "SELECT * FROM crest_property_images WHERE Property_ID='$property_id'";
+		
+			$db_images = $this->connection->query( $sql_images );
+			
+			while( $db_image = $db_images->fetch_assoc() ) {
+				
+				$current_images[ $db_image['image'] ] = $db_image['id'];
+				
+			} // End while
+			
 			foreach( $images as $image ){
 				
 				if ( isset( $image->MediaFormat ) && 'Image' == $image->MediaFormat ){
 					
 					if ( isset( $image->URL ) ){
+						
+						unset( $current_images[ $image->URL ]);
 						
 						$sequence = ( isset( $image->SequenceNumber ) )? $image->SequenceNumber : '';
 						
@@ -834,6 +851,18 @@ class Property {
 				} // end if
 				
 			} // end foreach
+			
+			if ( ( $this->get_field_value('Status') !== 'Closed') && ( $this->get_field_value('Status') !== 'Withdrawn') ){
+				
+				foreach( $current_images as $c_image_url => $c_image_id ){
+					
+					$image_remove_sql = "DELETE FROM crest_property_images WHERE id=$c_image_id";
+					
+					$this->connection->query( $image_remove_sql );
+					
+				} // End foreach
+				
+			} // End if
 			
 		} // end if
 		
@@ -858,8 +887,6 @@ class Property {
 				'image' => $image_url,
 				'order' => $sequence,
 			);
-			
-			
 			
 			foreach( $vals as $key => $value ){
 				

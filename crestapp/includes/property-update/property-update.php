@@ -39,7 +39,9 @@ function get_property(){
 	
 	var p_type = ( jQuery('#property_type').val() ) ? jQuery('#property_type').val() : 'ResidentialSale';
 	
-	var data = { property_id: properties[i][0], property_type: p_type };
+	var force_update = jQuery('#force_update').val();
+	
+	var data = { property_id: properties[i][0], property_type: p_type, f_update: force_update };
 	
 	console.log( data );
 	
@@ -79,7 +81,13 @@ Force Property Type:
 	<option value="CommercialSale">CommercialSale</option>
 	<option value="ResidentialRental">ResidentialRental</option>
 	<option value="CommercialLease">CommercialLease</option>
-</select>
+	</select></p>
+<p>
+Force Update:
+<select id="force_update">
+	<option selected="selected" value="0">Auto</option>
+	<option value="1">Force Update</option>
+	</select></p>
 <h2>Updated Properties:</h2>
 <p><span id="percent">0%</span> Completed</p>
 <ul id="results">

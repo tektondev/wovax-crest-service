@@ -825,7 +825,9 @@ class Property {
 					
 					if ( isset( $image->URL ) ){
 						
-						$this->insert_image(  $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $image->URL );
+						$sequence = ( isset( $image->SequenceNumber ) )? $image->SequenceNumber : '';
+						
+						$this->insert_image(  $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $image->URL, $sequence );
 						
 					} // end if
 					
@@ -838,15 +840,46 @@ class Property {
 	} // end insert_update_properties
 	
 	
-	public function insert_image( $listing_id, $mls_id, $image_url ){
+	public function insert_image( $listing_id, $mls_id, $image_url, $sequence = '' ){
 		
-		if ( ! $this->check_existing( 'crest_property_images', 'image', $image_url, 'Property_ID', $listing_id ) ){
+		$existing = $this->check_existing( 'crest_property_images', 'image', $image_url, 'Property_ID', $listing_id );
 		
-			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID) VALUES ( '$image_url','$mls_id','$listing_id' )";
+		//var_dump( $existing );
+		
+		if ( ! $existing ){
+		
+			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID,order) VALUES ( '$image_url','$mls_id','$listing_id', $sequence )";
 			
 			$this->connection->query( $sql );
 		
-		} // end if
+		} else if ( is_array( $existing ) ){
+			
+			$vals = array(
+				'image' => $image_url,
+				'order' => $sequence,
+			);
+			
+			
+			
+			foreach( $vals as $key => $value ){
+				
+				if ( empty( $existing[ $key ] ) || ( $existing[ $key ] != $value ) ){
+					
+					$id = $existing['id'];
+					
+					$new_url = $this->connection->real_escape_string( $image_url );
+					
+					$sql = "UPDATE crest_property_images SET image='" . $new_url . "', seq=" . $sequence . " WHERE id=" . $id ;
+					
+					$this->connection->query( $sql );
+					
+					break;
+					
+				} // End if
+				
+			} // End foreach
+			
+		}// end if
 		
 	} // end insert_image
 	
@@ -936,7 +969,7 @@ class Property {
 	} // end insert_image
 	
 	
-	public function insert_property( $echo = false ){
+	public function insert_property( $echo = false, $force_update = false ){
 		
 		$property_id = $this->get_field_value('Property_ID');
 		
@@ -950,7 +983,7 @@ class Property {
 		
 		} else {
 			
-			if ( strtotime( $this->get_field_value('LastUpdatedDate') ) > strtotime( $is_existing['LastUpdatedDate'] ) ) {
+			if ( ( strtotime( $this->get_field_value('LastUpdatedDate') ) > strtotime( $is_existing['LastUpdatedDate'] ) ) || $force_update ) {
 			
 				$fields = $this->get_fields();
 				
@@ -967,6 +1000,8 @@ class Property {
 				} // end foreach
 				
 				$sql = "UPDATE crest_properties SET " . implode( ',', $qvalues ) . ",wovaxUpdated=now() WHERE Property_ID='$property_id'";
+				
+				$this->insert_images();
 				
 				//$sql = "UPDATE crest_properties SET " . implode( ',', $qvalues ) . ",wovaxUpdated=now()" WHERE Property_ID='$property_id'";
 				
@@ -985,6 +1020,10 @@ class Property {
 				echo $property_id . ' updated';
 				
 			} else {
+				
+				$sql = "UPDATE crest_properties SET wovaxUpdated=now() WHERE Property_ID='$property_id'";
+				
+				$this->connection->query( $sql );
 				
 				echo $property_id . ' up-to-date';
 				

@@ -8,6 +8,9 @@ class Cron extends Endpoint {
 		
 		require_once 'config.php';
 		
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+		
 		$this->do_request();
 		
 	}
@@ -31,7 +34,7 @@ class Cron extends Endpoint {
 			
 		} else {
 			
-			//$this->do_update_properties( $connect, $log );
+			$this->do_update_properties( $connect, $log );
 			
 		} // end if
 		
@@ -110,7 +113,7 @@ class Cron extends Endpoint {
 		
 		$connection = $connect->connect();
 		
-		$properties = array();
+		//$properties = array();
 		
 		//$sql = "SELECT * FROM crest_properties ORDER BY wovaxUpdated DESC LIMIT 5 ";
 		
@@ -118,11 +121,39 @@ class Cron extends Endpoint {
 		
 		$results = $connection->query( $sql );
 		
-		//var_dump( $results );
+		$feed = $this->get_feed( $connect );
+		
+		$feed->authenticate();
+
+		require_once CRESTAPPCLASSPATH . 'crest.class.php';
+
+		require_once CRESTAPPCLASSPATH . 'property.class.php';
+		
+		$crest = new Crest();
 		
 		while( $db_property = $results->fetch_assoc() ) {
+			
+			$db_property = $db_property;
+
+			$property_id = $db_property['Property_ID'];
+
+			$property_type = ( ! empty( $db_property['SorcePropertyType'] ) ) ? $_GET['SorcePropertyType'] : 'ResidentialSale';
+
+			$property = new Property( $connection, $feed, $crest );
 				
-			$properties[] = $db_property;
+			$crest_property = $crest->single_detail_get( $feed, $property_type, $property_id, $log );
+			
+			if ( $crest_property ){
+				
+				$property->set_from_crest( $crest_property );
+				
+				$property->set_field( 'SourcePropertyType', $property_type );
+				
+				$force_update = ( ! empty( $_GET['f_update'] ) )? true : false;
+				
+				$property->insert_property( true, $force_update );
+				
+			} // End if
 			
 		} // end while
 		

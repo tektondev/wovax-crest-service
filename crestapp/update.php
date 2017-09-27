@@ -82,7 +82,9 @@ class Update {
 				
 				$property->set_field( 'SourcePropertyType', $property_type );
 				
-				$property->insert_property( true );
+				$force_update = ( ! empty( $_GET['f_update'] ) )? true : false;
+				
+				$property->insert_property( true, $force_update );
 				
 			} else {
 				

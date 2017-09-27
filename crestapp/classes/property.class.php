@@ -848,7 +848,7 @@ class Property {
 		
 		if ( ! $existing ){
 		
-			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID,order) VALUES ( '$image_url','$mls_id','$listing_id', $sequence )";
+			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID, seq) VALUES ( '$image_url','$mls_id','$listing_id', $sequence )";
 			
 			$this->connection->query( $sql );
 		

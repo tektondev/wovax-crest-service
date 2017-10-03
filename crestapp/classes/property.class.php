@@ -403,7 +403,7 @@ class Property {
 	
 	public function insert($feed = false, $crest = false ){
 		
-		$this->insert_agents( $feed = false, $crest = false );
+		$this->insert_agents();
 		
 		$this->insert_property_features();
 		
@@ -422,7 +422,22 @@ class Property {
 	
 	public function insert_agents( $feed = false, $crest = false ){
 		
+		$property_id = $this->get_field_value('Property_ID');
+		
+		$current_agents = array();
+		
 		$agents = $this->get_field_value('AssociatedAgents');
+		
+		$sql_agents = "SELECT * FROM crest_property_agents WHERE Property_ID='$property_id'";
+		
+		$db_agents = $this->connection->query( $sql_agents );
+		
+
+		while( $db_agent = $db_agents->fetch_assoc() ) {
+
+			$current_agents[ $db_agent['agent_id'] ] = $db_agent['Property_ID'];
+
+		} // End while
 		
 		if ( isset( $agents->Agent ) ){
 			
@@ -431,6 +446,8 @@ class Property {
 				foreach( $agents->Agent as $agent ){
 					
 					$insert_agent = $this->get_agent( $agent );
+					
+					unset( $current_agents[ $insert_agent['id'] ] );
 					
 					//var_dump( $insert_agent );
 					
@@ -444,6 +461,8 @@ class Property {
 				
 				$insert_agent = $this->get_agent( $agents->Agent );
 				
+				unset( $current_agents[ $insert_agent['id'] ] );
+				
 				//var_dump( $insert_agent );
 				
 				$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary'] );
@@ -454,14 +473,38 @@ class Property {
 			
 		} // end if
 		
+		foreach( $current_agents as $agent_id => $property_id ){
+					
+			$agent_remove_sql = "DELETE FROM crest_property_agents WHERE agent_id='$agent_id' AND Property_ID='$property_id'";
+
+			$this->connection->query( $agent_remove_sql );
+
+		} // End foreach
+		
 	} // end insert_update_properties
 	
 	
 	public function insert_property_agent( $property_id, $mls_id, $agent_id, $is_primary ){
 		
-		$sql = "INSERT INTO crest_property_agents (Property_ID, MLS_ID, agent_id,is_primary) VALUES ( '$property_id','$mls_id','$agent_id','$is_primary' )";
+		$agent = $this->check_existing( 'crest_property_agents', 'agent_id', $agent_id, 'Property_ID', $property_id );
 		
-		$this->connection->query( $sql );
+		if ( ! $agent ){
+		
+			$sql = "INSERT INTO crest_property_agents (Property_ID, MLS_ID, agent_id,is_primary) VALUES ( '$property_id','$mls_id','$agent_id','$is_primary' )";
+		
+			$this->connection->query( $sql );
+			
+		} else {
+			
+			if ( $agent['is_primary'] != $is_primary ){
+				
+				$usql = "UPDATE crest_property_agents SET is_primary='$is_primary', WHERE agent_id='$agent_id' AND Property_ID='$property_id'";
+				
+				$this->connection->query( $usql );
+				
+			} // End if
+			
+		} // End if
 		
 	} // end insert_image
 	
@@ -896,7 +939,7 @@ class Property {
 					
 					$new_url = $this->connection->real_escape_string( $image_url );
 					
-					$sql = "UPDATE crest_property_images SET image='" . $new_url . "', seq=" . $sequence . " WHERE id=" . $id ;
+					$sql = "UPDATE crest_property_images SET image='" . $new_url . "', seq=" . $sequence . " WHERE id='" . $id . "'";
 					
 					$this->connection->query( $sql );
 					
@@ -1030,6 +1073,8 @@ class Property {
 				
 				$this->insert_images();
 				
+				$this->insert_agents();
+				
 				//$sql = "UPDATE crest_properties SET " . implode( ',', $qvalues ) . ",wovaxUpdated=now()" WHERE Property_ID='$property_id'";
 				
 				//$values[] = "'" . $this->connection->real_escape_string( $value ) . "'";
@@ -1044,7 +1089,7 @@ class Property {
 				
 				$this->connection->query( $sql );
 				
-				echo $property_id . ' updated';
+				echo $property_id . ' updated  <br />';
 				
 			} else {
 				
@@ -1052,7 +1097,7 @@ class Property {
 				
 				$this->connection->query( $sql );
 				
-				echo $property_id . ' up-to-date';
+				echo $property_id . ' up-to-date  <br />';
 				
 			}// end if
 			

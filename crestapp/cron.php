@@ -153,7 +153,15 @@ class Cron extends Endpoint {
 				
 				$property->insert_property( true, $force_update );
 				
-			} // End if
+			} else {
+				
+				$sql = "UPDATE crest_properties SET wovaxUpdated=now() WHERE Property_ID='$property_id'";
+				
+				$connection->query( $sql );
+				
+				echo $property_id . ' up-to-date not In CREST <br />';
+				
+			}// End if
 			
 		} // end while
 		

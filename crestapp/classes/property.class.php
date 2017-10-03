@@ -498,7 +498,7 @@ class Property {
 			
 			if ( $agent['is_primary'] != $is_primary ){
 				
-				$usql = "UPDATE crest_property_agents SET is_primary='$is_primary', WHERE agent_id='$agent_id' AND Property_ID='$property_id'";
+				$usql = "UPDATE crest_property_agents SET is_primary='$is_primary' WHERE agent_id='$agent_id' AND Property_ID='$property_id'";
 				
 				$this->connection->query( $usql );
 				

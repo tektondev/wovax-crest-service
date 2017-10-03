@@ -90,7 +90,7 @@ class Update_Queue {
 		$default_args = array(
 			'save' 		=> false, // save updates in database
 			'end_time' 	=> $now->format('Y-m-d H:i:s'), // ending point for request - default now
-			'minutes' 	=> 15, // get updates from the previous count of minutes (1440 for day) 
+			'minutes' 	=> 30, // get updates from the previous count of minutes (1440 for day) 
 		); // end $default_args
 		
 		$args = array_merge( $default_args, $args );

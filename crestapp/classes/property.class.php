@@ -525,8 +525,6 @@ class Property {
 		
 		require_once 'person.class.php';
 		
-		$agent_id = 
-		
 		$person = new Person( $agent->AgentId, $this->connection, $this->feed, $this->crest );
 		
 		$insert_agent = array(

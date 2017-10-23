@@ -22,10 +22,42 @@ a {
 <script>
 
 var properties = [<?php echo implode(',', $properties );?>];
+	
+var agents = <?php echo $js_agents;?>;
 
 var i = 0;
+	
+var a = 0;
 
 jQuery('body').on('click','#update-properties', function( event ) { event.preventDefault(); i = jQuery('#start').val(); get_property() });
+	
+jQuery('body').on('click','#update-agents', function( event ) { event.preventDefault(); i = get_agent() });
+	
+function get_agent(){
+	
+	console.log( agents[a] );
+	
+	var data = { agent_id: agents[a] };
+	
+	jQuery.get( 
+		'',
+		data,  
+		function( response ) {
+			
+			jQuery('#results').append( '<li>' + response + '</li>' );
+			
+			var percent = Math.floor( ( i / ( agents.length - 1 ) ) * 100);
+			
+			jQuery('#percent').html( percent + '%' );
+
+			a++;
+			
+			get_agent();	
+ 
+		}
+	);
+	
+} // End get_agent
 
 function get_property(){
 	
@@ -87,8 +119,10 @@ Force Update:
 <select id="force_update">
 	<option selected="selected" value="0">Auto</option>
 	<option value="1">Force Update</option>
-	</select></p>
-<h2>Updated Properties:</h2>
+	</select></p><p>
+<a href="#" id="update-agents">Update Agents</a>
+</p>
+<h2>Updated:</h2>
 <p><span id="percent">0%</span> Completed</p>
 <ul id="results">
 </ul>

@@ -164,7 +164,7 @@ class Property {
 			'PropertyUse' => ( isset( $p->Property->PropertyUse ) )? $p->Property->PropertyUse : '',
 			'NoOfParkingPlaces' => ( isset( $p->Property->NoOfParkingPlaces ) )? $p->Property->NoOfParkingPlaces : '',
 			'FullBath' => ( isset( $p->Property->FullBath ) )? $p->Property->FullBath : '',
-			'HalfBath' => ( isset( $p->HalfBath ) )? $p->HalfBath : '',
+			'HalfBath' => ( isset( $p->Property->HalfBath ) )? $p->Property->HalfBath : '',
 			'LastSoldOn' => ( isset( $p->LastSoldOn ) )? $p->LastSoldOn : '',
 			'PropertyFeatures' => ( isset( $p->Property->PropertyFeatures->Feature ) )? $p->Property->PropertyFeatures->Feature  : array(),
 			'NumberOfLevels' => ( isset( $p->Property->NumberOfLevels ) )? $p->Property->NumberOfLevels : '',
@@ -432,7 +432,6 @@ class Property {
 		
 		$db_agents = $this->connection->query( $sql_agents );
 		
-
 		while( $db_agent = $db_agents->fetch_assoc() ) {
 
 			$current_agents[ $db_agent['agent_id'] ] = $db_agent['Property_ID'];
@@ -523,6 +522,12 @@ class Property {
 	
 	
 	protected function get_agent( $agent ){
+		
+		require_once 'person.class.php';
+		
+		$agent_id = 
+		
+		$person = new Person( $agent->AgentId, $this->connection, $this->feed, $this->crest );
 		
 		$insert_agent = array(
 			'id' => ( isset( $agent->AgentId ) ) ? $agent->AgentId : '',
@@ -652,8 +657,9 @@ class Property {
 	protected function get_agent_info_crest( $agent_id ){
 		
 		$agent_info = array(
-			'phone' => 'na',
-			'email' => 'na',
+			'phone' 	=> 'na',
+			'email' 	=> 'na',
+			'mls_id' 	=> '',
 		);
 		
 		$crest_agent = $this->crest->get_agent( $agent_id, $this->feed );
@@ -895,7 +901,7 @@ class Property {
 				
 			} // end foreach
 			
-			if ( ( $this->get_field_value('Status') !== 'Closed') && ( $this->get_field_value('Status') !== 'Withdrawn') ){
+			if ( count( $images > 4 ) ){
 				
 				foreach( $current_images as $c_image_url => $c_image_id ){
 					

@@ -22,15 +22,19 @@ class Update {
 			
 		$this->log = new Log( $this->connect->connect() );
 		
-		if ( ! isset( $_GET['property_id'] ) ){	
-			
-			$this->do_update();
-		
-		} else {
+		if ( isset( $_GET['property_id'] ) ){	
 			
 			$this->ajax_update();
+		
+		} else if ( isset( $_GET['agent_id'] ) ){
 			
-		} // End if
+			$this->ajax_agent_update();
+			
+		} else {
+			
+			$this->do_update();
+			
+		}// End if
 		
 	} // End __construct
 	
@@ -45,11 +49,34 @@ class Update {
 		
 		$properties = $property_factory->get_db_properties();
 		
+		$js_agents = $this->get_agents_js();
+		
 		include_once 'includes/property-update/property-update.php';
 		
 		//var_dump( $properties );
 		
 	} // End do_update
+	
+	
+	public function ajax_agent_update(){
+		
+		$feed = $this->get_feed( $this->connect );
+		
+		$feed->authenticate();
+		
+		require_once CRESTAPPCLASSPATH . 'crest.class.php';
+		
+		require_once CRESTAPPCLASSPATH . 'person.class.php';
+		
+		$crest = new Crest();
+		
+		$agent_id = $_GET['agent_id'];
+		
+		$person = new Person( $agent_id, $this->connect->connect(), $feed, $crest );
+		
+		echo 'agent: ' . $agent_id . ' updated';
+		
+	} // End ajax_agent_update
 	
 	
 	public function ajax_update(){
@@ -106,6 +133,33 @@ class Update {
 		return $feed;
 		
 	} // end get_feed
+	
+	
+	protected function get_agents_js(){
+		
+		$agent_ids = array();
+		
+		$connection = $this->connect->connect();
+		
+		$sql = "SELECT * FROM crest_agents";
+		
+		$result = $connection->query( $sql );
+		
+		if ( $result->num_rows > 0 ) {
+			
+			while( $row = $result->fetch_assoc() ) {
+			
+				$agent_ids[] = $row['agent_id'];
+			
+			} // End while
+			
+		} // End if
+		
+		$agent_js = '[\'' . implode('\',\'', $agent_ids ) . '\']';
+		
+		return $agent_js;
+		
+	} // End get_json_agents
 	
 } 
 

@@ -47,7 +47,9 @@ class Update {
 		
 		$js_properties = array();
 		
-		$properties = $property_factory->get_db_properties();
+		$property_status = ( $_GET['status'] )? true : false;
+		
+		$properties = $property_factory->get_db_properties( $property_status );
 		
 		$js_agents = $this->get_agents_js();
 		

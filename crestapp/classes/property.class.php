@@ -438,35 +438,64 @@ class Property {
 
 		} // End while
 		
+		require_once 'person.class.php';
+		
 		if ( isset( $agents->Agent ) ){
 			
 			if ( is_array( $agents->Agent ) ){
 				
 				foreach( $agents->Agent as $agent ){
 					
-					$insert_agent = $this->get_agent( $agent );
+					$agent_id = ( isset( $agent->AgentId ) ) ? $agent->AgentId : '';
+
+					$is_primary = ( isset( $agent->IsPrimary ) ) ? $agent->IsPrimary : 0;
+
+					$person = new Person( $agent_id, $this->connection, $this->feed, $this->crest );
 					
-					unset( $current_agents[ $insert_agent['id'] ] );
+					//var_dump( $person );
+
+					$person->insert_person( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $is_primary );
+					
+					unset( $current_agents[ $agent_id ] );
+				
+					
+					//$insert_agent = $this->get_agent( $agent );
+					
+					//unset( $current_agents[ $insert_agent['id'] ] );
 					
 					//var_dump( $insert_agent );
 					
-					$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary']);
+					//$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary']);
 					
-					$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
+					//$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
 					
 				} // end foreach;
 				
 			} else {
 				
-				$insert_agent = $this->get_agent( $agents->Agent );
+				$agent = $agents->Agent; 
 				
-				unset( $current_agents[ $insert_agent['id'] ] );
+				$agent_id = ( isset( $agent->AgentId ) ) ? $agent->AgentId : '';
+
+				$is_primary = ( isset( $agent->IsPrimary ) ) ? $agent->IsPrimary : 0;
+
+				$person = new Person( $agent_id, $this->connection, $this->feed, $this->crest );
+				
+				//var_dump( $person );
+
+				$person->insert_person( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $is_primary );
+
+				unset( $current_agents[ $agent_id ] );
+				
+				//$insert_agent = $this->get_agent( $agents->Agent );
+				
+				//unset( $current_agents[ $insert_agent['id'] ] );
 				
 				//var_dump( $insert_agent );
 				
-				$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary'] );
+				//$this->insert_property_agent( $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $insert_agent['id'], $insert_agent['is_primary'] );
 				
-				$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
+				//$this->insert_agent_record( $insert_agent['id'], $insert_agent['name'], $insert_agent['email'], $insert_agent['phone'], $insert_agent['team_id'], $insert_agent['staff_id'] );
 				
 			} // end if
 			
@@ -483,7 +512,7 @@ class Property {
 	} // end insert_update_properties
 	
 	
-	public function insert_property_agent( $property_id, $mls_id, $agent_id, $is_primary ){
+	/*public function insert_property_agent( $property_id, $mls_id, $agent_id, $is_primary ){
 		
 		$agent = $this->check_existing( 'crest_property_agents', 'agent_id', $agent_id, 'Property_ID', $property_id );
 		
@@ -505,10 +534,10 @@ class Property {
 			
 		} // End if
 		
-	} // end insert_image
+	} // end insert_image */
 	
 	
-	public function insert_agent_record( $agent_id, $agent_name, $email, $phone, $team_id, $staff_id){
+	/*public function insert_agent_record( $agent_id, $agent_name, $email, $phone, $team_id, $staff_id){
 		
 		if ( ! $this->check_existing( 'crest_agents', 'agent_id', $agent_id ) ){
 		
@@ -518,10 +547,10 @@ class Property {
 		
 		} // end if
 		
-	} // end insert_image
+	} // end insert_image*/
 	
 	
-	protected function get_agent( $agent ){
+	/*protected function get_agent( $agent ){
 		
 		require_once 'person.class.php';
 		
@@ -547,7 +576,7 @@ class Property {
 		
 		return $insert_agent;
 		
-	} // end get_agent
+	} // end get_agent*/
 	
 	
 	protected function get_primary_agent( $agents ){
@@ -862,6 +891,8 @@ class Property {
 	
 	public function insert_images(){
 		
+		$insert_date = $this->get_field_value('LastUpdatedDate');
+		
 		$images = $this->get_field_value('ListingMedia');
 		
 		if ( $images && is_array( $images ) ){
@@ -869,7 +900,6 @@ class Property {
 			$current_images = array();
 			
 			$property_id = $this->get_field_value('Property_ID');
-			
 			
 			$sql_images = "SELECT * FROM crest_property_images WHERE Property_ID='$property_id'";
 		
@@ -883,6 +913,8 @@ class Property {
 			
 			foreach( $images as $image ){
 				
+				//var_dump( $image );
+				
 				if ( isset( $image->MediaFormat ) && 'Image' == $image->MediaFormat ){
 					
 					if ( isset( $image->URL ) ){
@@ -891,7 +923,7 @@ class Property {
 						
 						$sequence = ( isset( $image->SequenceNumber ) )? $image->SequenceNumber : '';
 						
-						$this->insert_image(  $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $image->URL, $sequence );
+						$this->insert_image(  $this->get_field_value('Property_ID'), $this->get_field_value('MLS_ID'), $image->URL, $sequence, $insert_date );
 						
 					} // end if
 					
@@ -916,15 +948,19 @@ class Property {
 	} // end insert_update_properties
 	
 	
-	public function insert_image( $listing_id, $mls_id, $image_url, $sequence = '' ){
+	public function insert_image( $listing_id, $mls_id, $image_url, $sequence = '', $time ){
 		
 		$existing = $this->check_existing( 'crest_property_images', 'image', $image_url, 'Property_ID', $listing_id );
+		
+		$image_url = $this->connection->real_escape_string( $image_url );
 		
 		//var_dump( $existing );
 		
 		if ( ! $existing ){
 		
-			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID, seq) VALUES ( '$image_url','$mls_id','$listing_id', $sequence )";
+			$sql = "INSERT INTO crest_property_images (image, MLS_ID, Property_ID, seq, updated) VALUES ( '$image_url','$mls_id','$listing_id', '$sequence', '$time' )";
+			
+			//var_dump( $sql );
 			
 			$this->connection->query( $sql );
 		
@@ -943,7 +979,7 @@ class Property {
 					
 					$new_url = $this->connection->real_escape_string( $image_url );
 					
-					$sql = "UPDATE crest_property_images SET image='" . $new_url . "', seq=" . $sequence . " WHERE id='" . $id . "'";
+					$sql = "UPDATE crest_property_images SET image='$new_url', seq='$sequence', updated='$time' WHERE id='$id'";
 					
 					$this->connection->query( $sql );
 					

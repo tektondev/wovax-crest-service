@@ -49,41 +49,39 @@ class Person {
 		$db_agent = $this->get_person_from_db();
 		
 		$crest_agent = $this->get_person_from_crest();
-		
-		$agent = ( $db_agent ) ? $this->update_person_record( $db_agent, $crest_agent ) : $crest_agent;
-		
-		$this->display_name = $agent['agent_display_name'];
-
-		$this->email = $agent['email'];
-
-		$this->phone = $agent['phone'];
-
-		$this->team_id = $agent['team_id'];
-
-		$this->staff_id = $agent['staff_id'];
-
-		$this->mls_id = $agent['agent_mls_id'];
-		
-		if ( ! $db_agent ){
 			
-			$this->create_agent();
+		$agent = ( ! empty( $crest_agent['agent_display_name'] ) ) ? $crest_agent : $db_agent ;
+		
+		if ( $agent ){
+
+			$this->display_name = $agent['agent_display_name'];
+
+			$this->email = $agent['email'];
+
+			$this->phone = $agent['phone'];
+
+			$this->team_id = $agent['team_id'];
+
+			$this->staff_id = $agent['staff_id'];
+
+			$this->mls_id = $agent['agent_mls_id'];
 			
-		} // End if
+		}
 		
 	} // End set_person
 	
 	
-	protected function update_agent( $key, $value ){ 
+	public function insert_person( $property_id = false, $property_mls_id = false, $is_primary = false ){
 		
-		$agent_id = $this->person_id;
+		$this->create_agent();
 		
-		$value = $this->connection->real_escape_string( $value );
+		if ( $property_id ){
+			
+			$this->add_agent_to_property( $property_id, $property_mls_id, $is_primary );
+			
+		} // End if
 		
-		$usql = "UPDATE crest_agents SET {$key}='{$value}' WHERE agent_id='{$agent_id}'";
-				
-		$results = $this->connection->query( $usql );
-		
-	} // End update_agent
+	} // End insert_person
 	
 	
 	protected function create_agent(){ 
@@ -102,36 +100,54 @@ class Person {
 			
 		$staff_id = $this->connection->real_escape_string( $this->staff_id );
 		
-		$sql = "INSERT INTO crest_agents (agent_id, agent_mls_id, agent_display_name, email, phone, team_id, staff_id) VALUES ( '$agent_id','$mls_id',$agent_name','$email','$phone','$team_id','$staff_id' )";
+		$sql = "INSERT INTO crest_agents (agent_id, agent_mls_id, agent_display_name, email, phone, team_id, staff_id) VALUES ( '$agent_id','$mls_id','$agent_name','$email','$phone','$team_id','$staff_id' ) ON DUPLICATE KEY UPDATE agent_id = '$agent_id', agent_mls_id = '$mls_id', agent_display_name = '$agent_name', email = '$email', phone = '$phone', team_id = '$team_id', staff_id = '$staff_id'";
 			  
 		$this->connection->query( $sql );
 		
 	} // End update_agent
 	
 	
-	protected function update_person_record( $db_agent, $crest_agent ){
+	protected function add_agent_to_property( $property_id, $property_mls_id, $is_primary ){
 		
-		$agent = $db_agent;
 		
-		foreach( $crest_agent as $key => $value ){
+		
+		$agent_id = $this->connection->real_escape_string( $this->person_id );
+		
+		$property_id = $this->connection->real_escape_string( $property_id );
+		
+		$property_mls_id = $this->connection->real_escape_string( $property_mls_id );
+		
+		$is_primary = $this->connection->real_escape_string( $is_primary );
 			
-			if ( ! empty( $value ) ){
-				
-				if ( empty( $db_agent[ $key ] ) || ( $db_agent[ $key ] !== $value ) ){
-					
-					$db_agent[ $key ] = $value;
-					
-					$this->update_agent( $key, $value );
-					
-				} // End if
-				
-			} // End if
+		$check_sql = "SELECT * FROM crest_property_agents WHERE Property_ID='$property_id' AND agent_id='$agent_id'";
+		
+		$result = $this->connection->query( $check_sql );
+		
+		$agent_property_id = false;
+		
+		if ( $result->num_rows > 0 ) {
 			
-		} // End foreach 
+			$row = $result->fetch_assoc();
+			
+			$agent_property_id = $row['id'];
+			
+		} // end if
 		
-		return $agent;
+		//$sql = "INSERT INTO crest_property_agents (Property_ID, MLS_ID, agent_id,is_primary) VALUES ( '$property_id','$property_mls_id','$agent_id','$is_primary' ) ON DUPLICATE KEY UPDATE Property_ID = '$property_id', MLS_ID = '$property_mls_id', agent_id = '$agent_id',is_primary = '$is_primary'";
 		
-	} // End update_person_record
+		if ( ! $agent_property_id ){
+			
+			$sql = "INSERT INTO crest_property_agents (Property_ID, MLS_ID, agent_id,is_primary) VALUES ( '$property_id','$property_mls_id','$agent_id','$is_primary' )";
+			
+		} else {
+			
+			$sql = "UPDATE crest_property_agents SET is_primary='$is_primary' WHERE agent_id='$agent_id' AND Property_ID='$property_id'";
+			
+		} // End if
+		
+		$this->connection->query( $sql );
+		
+	} // End add_agent_to_property
 	
 	
 	protected function get_person_from_db(){

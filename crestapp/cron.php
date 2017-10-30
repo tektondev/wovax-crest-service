@@ -133,7 +133,26 @@ class Cron extends Endpoint {
 		
 		while( $db_property = $results->fetch_assoc() ) {
 			
-			$db_property = $db_property;
+			$this->update_property( $db_property, $connection, $feed, $crest, $log );
+			
+		} // end while
+		
+		$active_sql = "SELECT * FROM crest_properties WHERE Status IN ('Active','Pending') ORDER BY wovaxUpdated ASC LIMIT 5 ";
+		
+		$active_results = $connection->query( $active_sql );
+		
+		while( $active_db_property = $active_results->fetch_assoc() ) {
+			
+			$this->update_property( $active_db_property, $connection, $feed, $crest, $log );
+			
+		} // end while
+		
+	} // End do_update_properties
+	
+	
+	protected function update_property( $db_property, $connection, $feed, $crest, $log ){
+		
+		$db_property = $db_property;
 
 			$property_id = $db_property['Property_ID'];
 
@@ -162,10 +181,8 @@ class Cron extends Endpoint {
 				echo $property_id . ' up-to-date not In CREST <br />';
 				
 			}// End if
-			
-		} // end while
 		
-	}
+	} // end update_property
 	
 	
 	protected function get_feed( $connect ){

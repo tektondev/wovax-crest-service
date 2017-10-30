@@ -50,11 +50,19 @@ class Property_Factory {
 	} // end get_properties_from_crest
 	
 	
-	public function get_db_properties( $status = '' ){
+	public function get_db_properties( $status = false ){
 		
 		$properties = array();
 		
-		$sql = "SELECT * FROM crest_properties WHERE Status IN ('Active','Pending')";
+		if ( ! $status ){
+		
+			$sql = "SELECT * FROM crest_properties WHERE Status IN ('Active','Pending')";
+			
+		} else {
+			
+			$sql = "SELECT * FROM crest_properties";
+			
+		} // End if 
 		
 		$results = $this->connection->query( $sql );
 		

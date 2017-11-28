@@ -84,7 +84,7 @@ class Person {
 	} // End insert_person
 	
 	
-	protected function create_agent(){ 
+	public function create_agent(){ 
 		
 		$agent_id = $this->connection->real_escape_string( $this->person_id );
 		
@@ -108,8 +108,6 @@ class Person {
 	
 	
 	protected function add_agent_to_property( $property_id, $property_mls_id, $is_primary ){
-		
-		
 		
 		$agent_id = $this->connection->real_escape_string( $this->person_id );
 		
@@ -198,9 +196,28 @@ class Person {
 		
 		$mls_id = '';
 		
+		//var_dump( $crest_agent );
+		
 		if ( isset( $crest_agent->PersonDetail->PersonMLSDetails )  ){
+			
+			if ( is_array( $crest_agent->PersonDetail->PersonMLSDetails->PersonMLS ) ){
 				
-			$mls_id = $crest_agent->PersonDetail->PersonMLSDetails->PersonMLS->PersonMLSId;
+				$mls_ids = array();
+				
+				foreach( $crest_agent->PersonDetail->PersonMLSDetails->PersonMLS as $index => $person_mls ){
+					
+					$mls_ids[] = $person_mls->PersonMLSId;
+					
+				} // End foreach
+				
+				$mls_id = implode(',', $mls_ids );
+				
+			} else {
+				
+				$mls_id = $crest_agent->PersonDetail->PersonMLSDetails->PersonMLS->PersonMLSId;
+				
+			} // End if
+				
 
 		} // end if
 		

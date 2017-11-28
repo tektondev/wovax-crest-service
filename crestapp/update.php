@@ -76,6 +76,10 @@ class Update {
 		
 		$person = new Person( $agent_id, $this->connect->connect(), $feed, $crest );
 		
+		$person->create_agent();
+		
+		//var_dump( $person );
+		
 		echo 'agent: ' . $agent_id . ' updated';
 		
 	} // End ajax_agent_update
